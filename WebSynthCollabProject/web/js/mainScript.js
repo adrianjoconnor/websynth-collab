@@ -5,6 +5,9 @@ var sampleArrayLength = 2048; // Buffer size
 var maxAmp = Math.pow ( 2, ( bitDepth - 1 ) ) - 1;
 var rangeFactor = Math.pow ( 2, bitDepth - 1 );
 
+var serverURL = "ws://server-de.adrianoc.com:6520";
+window.collabReady = false;
+
 // for recording
 
 var recordingBuffersize = 1024;
@@ -13,17 +16,27 @@ var outputChannels = 2;
 
 ///////////////////////////////////////////////////////
 
+window.numSynths = 90;
+window.onScreenKeyboardVelocity = 97;
+
+window.collabId = "";
+window.collabEnabled = false;
+
+window.chatName = "John";
+
 window.recording = false;
 
 var webAudioContext = new AudioContext();
 
-window.exitNode = webAudioContext.createGain();
+window.stereoPannerNode = webAudioContext.createStereoPanner();
 
-window.noteA4Frequency = 440; // value in hz
-window.numSynths = 90;
-window.masterVolSetting = 35;
-window.onScreenKeyboardOctave = 0;
-window.onScreenKeyboardVelocity = 97;
+window.lowpassFilterNode = webAudioContext.createBiquadFilter();
+window.lowpassFilterNode.type = "lowpass";
+
+window.highpassFilterNode = webAudioContext.createBiquadFilter();
+window.highpassFilterNode.type = "highpass";
+
+window.exitNode = webAudioContext.createGain();
 
 window.oscillatorTypes = [ 'sine', 'square', 'sawtooth', 'triangle' ];
 
@@ -58,43 +71,198 @@ var expVals = [ 0.04, 0.08, 0.14, 0.21, 0.30, 0.41, 0.54, 0.71, 0.90, 1.14, 1.42
 
 var onScreenKeyboard;
 
-window.volSetting1 = 35;
-window.freqSetting1 = 440;
-window.waveformSetting1 = 'sine';
-window.AttackSetting1 = 0.04; // Attack value is in seconds.
-window.DecaySetting1 = 0.35; // Decay value is in seconds.
-window.SustainSetting1 = 0.8;
-window.ReleaseSetting1 = 0.67724; // Release value is in seconds.
-window.OctaveMultiplierValue1 = 0;
-window.SemitoneOffsetValue1 = 0;
+var defaultSettings = {
+    noteA4Frequency:    440, // value in hz
+    masterVolSetting:   35,
+    onScreenKeyboardOctave: 0,
+    balance:    0,
+    lowpassFilterFreq:  20000,
+    highpassFilterFreq: 0,
+    
+    volSetting1:    35,
+    freqSetting1:    440, // not used. see makeLFO function.
+    waveformSetting1:    'sine',
+    AttackSetting1:    0.04, // Attack value is in seconds.
+    DecaySetting1:    0.35, // Decay value is in seconds.
+    SustainSetting1:    0.8,
+    ReleaseSetting1:    0.15426, // Release value is in seconds.
+    OctaveMultiplierValue1:    0,
+    SemitoneOffsetValue1:    0,
+    
+    volSetting2:    35,
+    freqSetting2:    220, // not used. see makeLFO function.
+    waveformSetting2:    'square',
+    AttackSetting2:    0.04,
+    DecaySetting2:    0.35,
+    SustainSetting2:    0.8,
+    ReleaseSetting2:    0.15426,
+    OctaveMultiplierValue2:    0,
+    SemitoneOffsetValue2:    0,
+    
+    volSetting3:    20,
+    freqSetting3:    660, // not used. see makeLFO function.
+    waveformSetting3:    'sawtooth',
+    AttackSetting3:    0.04,
+    DecaySetting3:    0.35,
+    SustainSetting3:    0.8,
+    ReleaseSetting3:    0.15426,
+    OctaveMultiplierValue3:    0,
+    SemitoneOffsetValue3:    0,
+    
+    volSettingLFO:    0,
+    freqSettingLFO:    1,
+    waveformSettingLFO:    'sine',
+    AttackSettingLFO:    0.04,
+    DecaySettingLFO:    0.35,
+    SustainSettingLFO:    0.8,
+    ReleaseSettingLFO:    0.15426,
+}
 
-window.volSetting2 = 35;
-window.freqSetting2 = 220;
-window.waveformSetting2 = 'square';
-window.AttackSetting2 = 0.04;
-window.DecaySetting2 = 0.35;
-window.SustainSetting2 = 0.8;
-window.ReleaseSetting2 = 0.67724;
-window.OctaveMultiplierValue2 = 0;
-window.SemitoneOffsetValue2 = 0;
-
-window.volSetting3 = 20;
-window.freqSetting3 = 660;
-window.waveformSetting3 = 'sawtooth';
-window.AttackSetting3 = 0.04;
-window.DecaySetting3 = 0.35;
-window.SustainSetting3 = 0.8;
-window.ReleaseSetting3 = 0.67724;
-window.OctaveMultiplierValue3 = 0;
-window.SemitoneOffsetValue3 = 0;
-
-window.LFOvol = 0;
-window.LFOfreq = 1;
-window.LFOwaveform = 'sine';
-window.LFOattack = 0.04;
-window.LFOdecay = 0.35;
-window.LFOsustain = 0.8;
-window.LFOrelease = 0.67724;
+var presetsList = {
+    ePiano: {
+        title:  "Electric Piano",  
+        preset: {
+                noteA4Frequency:    440, // value in hz
+                masterVolSetting:   83,
+                onScreenKeyboardOctave: 2,
+                balance:    -0.11,
+                lowpassFilterFreq:  20000,
+                highpassFilterFreq: 0,
+            
+                volSetting1:    57,
+                freqSetting1:    440, // not used. see makeLFO function.
+                waveformSetting1:    'triangle',
+                AttackSetting1:    0.2, // Attack value is in seconds.
+                DecaySetting1:    2654, // Decay value is in seconds.
+                SustainSetting1:    0.43,
+                ReleaseSetting1:    50, // Release value is in seconds.
+                OctaveMultiplierValue1:    0,
+                SemitoneOffsetValue1:    0,
+                
+                volSetting2:    48,
+                freqSetting2:    220, // not used. see makeLFO function.
+                waveformSetting2:    'square',
+                AttackSetting2:    0.2,
+                DecaySetting2:    1258,
+                SustainSetting2:    0.21,
+                ReleaseSetting2:    50,
+                OctaveMultiplierValue2:    2,
+                SemitoneOffsetValue2:    0,
+                
+                volSetting3:    20,
+                freqSetting3:    660, // not used. see makeLFO function.
+                waveformSetting3:    'sawtooth',
+                AttackSetting3:    0.2,
+                DecaySetting3:    2320,
+                SustainSetting3:    0.39,
+                ReleaseSetting3:    52,
+                OctaveMultiplierValue3:    4,
+                SemitoneOffsetValue3:    0,
+                
+                volSettingLFO:    0,
+                freqSettingLFO:    1,
+                waveformSettingLFO:    'sine',
+                AttackSettingLFO:    0.04,
+                DecaySettingLFO:    0.35,
+                SustainSettingLFO:    0.8,
+                ReleaseSettingLFO:    0.15426,
+            }
+    },
+    xylobell: {
+        title:  "Xylobell",  
+        preset: {
+                noteA4Frequency:440,
+                masterVolSetting:38,
+                onScreenKeyboardOctave:3,
+                balance:-0.26,
+                lowpassFilterFreq:3033,
+                highpassFilterFreq:244,
+                freqSettingLFO:1,
+                volSettingLFO:0,
+                waveformSettingLFO:"sine",
+                AttackSettingLFO:0.04000,
+                DecaySettingLFO:0.35000,
+                SustainSettingLFO:0.8,
+                ReleaseSettingLFO:0.15000,
+                volSetting1:57,
+                freqSetting1:440,
+                waveformSetting1:"triangle",
+                AttackSetting1:0.20000,
+                DecaySetting1:99.92000,
+                SustainSetting1:0.43,
+                ReleaseSetting1:1861.21000,
+                volSetting2:48,
+                freqSetting2:220,
+                waveformSetting2:"square",
+                AttackSetting2:0.20000,
+                DecaySetting2:125.87000,
+                SustainSetting2:0.21,
+                ReleaseSetting2:1440.95000,
+                volSetting3:20,
+                freqSetting3:660,
+                waveformSetting3:"sawtooth",
+                AttackSetting3:0.20000,
+                DecaySetting3:125.87000,
+                SustainSetting3:0.39,
+                ReleaseSetting3:677.24000,
+                OctaveMultiplierValue1:0,
+                SemitoneOffsetValue1:0,
+                OctaveMultiplierValue2:2,
+                SemitoneOffsetValue2:0,
+                OctaveMultiplierValue3:4,
+                SemitoneOffsetValue3:0
+            }
+    },
+    organ: {
+        title:  "Organ",  
+        preset: {
+                noteA4Frequency:    440, // value in hz
+                masterVolSetting:   83,
+                onScreenKeyboardOctave: 2,
+                balance:    -0.11,
+                lowpassFilterFreq:  20000,
+                highpassFilterFreq: 0,
+            
+                volSetting1:    57,
+                freqSetting1:    440, // not used. see makeLFO function.
+                waveformSetting1:    'triangle',
+                AttackSetting1:    0.2, // Attack value is in seconds.
+                DecaySetting1:    2654, // Decay value is in seconds.
+                SustainSetting1:    0.43,
+                ReleaseSetting1:    50, // Release value is in seconds.
+                OctaveMultiplierValue1:    0,
+                SemitoneOffsetValue1:    0,
+                
+                volSetting2:    48,
+                freqSetting2:    220, // not used. see makeLFO function.
+                waveformSetting2:    'square',
+                AttackSetting2:    0.2,
+                DecaySetting2:    1258,
+                SustainSetting2:    0.21,
+                ReleaseSetting2:    50,
+                OctaveMultiplierValue2:    2,
+                SemitoneOffsetValue2:    0,
+                
+                volSetting3:    20,
+                freqSetting3:    660, // not used. see makeLFO function.
+                waveformSetting3:    'sawtooth',
+                AttackSetting3:    0.2,
+                DecaySetting3:    2320,
+                SustainSetting3:    0.39,
+                ReleaseSetting3:    52,
+                OctaveMultiplierValue3:    4,
+                SemitoneOffsetValue3:    0,
+                
+                volSettingLFO:    0,
+                freqSettingLFO:    1,
+                waveformSettingLFO:    'sine',
+                AttackSettingLFO:    0.04,
+                DecaySettingLFO:    0.35,
+                SustainSettingLFO:    0.8,
+                ReleaseSettingLFO:    0.15426,
+            }
+    }
+}
 
 function mobilecheck ( ) {
   var check = false;
@@ -135,7 +303,7 @@ Osc.prototype.setUpEnvelope = function () {
     
     this.envelopeNode.gain.setValueAtTime( 0, currentTime );
     this.envelopeNode.gain.linearRampToValueAtTime( 1, currentTime + this.attack ); // Attack is in seconds.
-    this.envelopeNode.gain.exponentialRampToValueAtTime( this.sustain, currentTime + this.attack + this.decay );
+    this.envelopeNode.gain.linearRampToValueAtTime( this.sustain, currentTime + this.attack + this.decay );
 };
 
 // To be called when note is released.
@@ -187,7 +355,7 @@ function Synth () {
     this.osc1 = new Osc( window.freqSetting1, window.volSetting1, window.waveformSetting1, window.AttackSetting1, window.DecaySetting1, window.SustainSetting1, window.ReleaseSetting1, window.OctaveMultiplierValue1, SemitoneOffsetValue1 );
     this.osc2 = new Osc( window.freqSetting2, window.volSetting2, window.waveformSetting2, window.AttackSetting2, window.DecaySetting2, window.SustainSetting2, window.ReleaseSetting2, window.OctaveMultiplierValue2, SemitoneOffsetValue2 );
     this.osc3 = new Osc( window.freqSetting3, window.volSetting3, window.waveformSetting3, window.AttackSetting3, window.DecaySetting3, window.SustainSetting3, window.ReleaseSetting3, window.OctaveMultiplierValue3, SemitoneOffsetValue3 );
-    this.LFO = makeLFO( window.LFOfreq, window.LFOvol, window.LFOwaveform, window.LFOattack, window.LFOdecay, window.LFOsustain, window.LFOrelease );
+    this.LFO = makeLFO( window.freqSettingLFO, window.volSettingLFO, window.waveformSettingLFO, window.AttackSettingLFO, window.DecaySettingLFO, window.SustainSettingLFO, window.ReleaseSettingLFO );
     
     this.midiGainNode = webAudioContext.createGain();
     this.masterVolumeNode = webAudioContext.createGain();
@@ -207,7 +375,7 @@ Synth.prototype.connect = function () {
     
     this.midiGainNode.connect( this.masterVolumeNode );
     
-    this.masterVolumeNode.connect( window.exitNode );
+    this.masterVolumeNode.connect( window.stereoPannerNode );
 };
 
 Synth.prototype.changeMidiVolume = function ( newVol ) {
@@ -273,7 +441,16 @@ Synth.prototype.setupReleaseCallback = function ( synthNum ) {
 var volumeNode = webAudioContext.createGain();
 
 $( document ).ready(function() {
+    var URLSettingsOnLoad = getUrlSettings();
 
+    document.getElementById('fileSelect').addEventListener( 'change', loadSettingsFile, false );
+    
+    populatePresets();
+    
+    loadSettingsObject( defaultSettings , false, false );
+    
+    loadSettings();
+    
     if ( mobilecheck() ) {
         $('#onScreenKeyboard').attr('octaves','1');
         $('#onScreenKeyboardOctaveSelect').append($('<option>', {
@@ -289,13 +466,20 @@ $( document ).ready(function() {
     onScreenKeyboard.addEventListener('noteon', function(e) {
         var note = parseInt(e.detail.index) + 36 + ( parseInt(window.onScreenKeyboardOctave) * 12 );
         var velocity = parseInt(window.onScreenKeyboardVelocity);
-        turnNoteOn ( note, velocity );
+        turnNoteOn ( note, velocity, false );
     });
 
     onScreenKeyboard.addEventListener('noteoff', function(e) {
         var note = parseInt(e.detail.index) + 36 + ( parseInt(window.onScreenKeyboardOctave) * 12 );
-        turnNoteOff ( note );
+        turnNoteOff ( note, false );
     });
+    
+    window.stereoPannerNode.connect( lowpassFilterNode );
+    window.lowpassFilterNode.connect( highpassFilterNode );
+    window.highpassFilterNode.connect( exitNode );
+    
+    window.lowpassFilterNode.frequency.value = window.lowpassFilterFreq;
+    window.highpassFilterNode.frequency.value = window.highpassFilterFreq;
     
     window.exitNode.gain.value = 1;
     window.exitNode.connect( webAudioContext.destination );
@@ -321,10 +505,10 @@ $( document ).ready(function() {
                         'thickness' : oscKnobThickness,
                     });
     
-    $("#volume-knob-lfo").knob({
+    $("#volume-knob-LFO").knob({
                         'min':0,
                         'max':100,
-                        'change' : function ( val ) { reviseVolumeLFO( val ) },
+                        'change' : function ( val ) { reviseVolume( "LFO" ,val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
@@ -332,7 +516,7 @@ $( document ).ready(function() {
     $("#volume-knob-1").knob({
                         'min':0,
                         'max':100,
-                        'change' : function ( val ) { reviseVolume1( val ) },
+                        'change' : function ( val ) { reviseVolume( "1", val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
@@ -340,7 +524,7 @@ $( document ).ready(function() {
     $("#volume-knob-2").knob({
                         'min':0,
                         'max':100,
-                        'change' : function ( val ) { reviseVolume2( val ) },
+                        'change' : function ( val ) { reviseVolume( "2", val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
@@ -348,7 +532,7 @@ $( document ).ready(function() {
     $("#volume-knob-3").knob({
                         'min':0,
                         'max':100,
-                        'change' : function ( val ) { reviseVolume3( val ) },
+                        'change' : function ( val ) { reviseVolume( "3", val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
@@ -360,13 +544,29 @@ $( document ).ready(function() {
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
+                    
+    $("#freq-knob-lowpass").knob({
+                        'min':0,
+                        'max':20000,
+                        'change' : function ( val ) { reviseFreqLowpass( val ) },
+                        'width' : oscKnobWidth,
+                        'thickness' : oscKnobThickness,
+                    });
+                    
+    $("#freq-knob-highpass").knob({
+                        'min':0,
+                        'max':20000,
+                        'change' : function ( val ) { reviseFreqHighpass( val ) },
+                        'width' : oscKnobWidth,
+                        'thickness' : oscKnobThickness,
+                    });
     
     $('#master-volume-knob')
-        .val(35)
+        .val(window.masterVolSetting)
         .trigger('change');
         
-    $('#volume-knob-lfo')
-        .val(window.LFOvol)
+    $('#volume-knob-LFO')
+        .val(window.volSettingLFO)
         .trigger('change');
                     
     $('#volume-knob-1')
@@ -382,16 +582,24 @@ $( document ).ready(function() {
         .trigger('change');
         
     $('#freq-knob-lfo')
-        .val(window.LFOfreq)
+        .val(window.freqSettingLFO)
+        .trigger('change');
+        
+    $('#freq-knob-lowpass')
+        .val(window.lowpassFilterFreq)
+        .trigger('change');
+        
+    $('#freq-knob-highpass')
+        .val(window.highpassFilterFreq)
         .trigger('change');
     
     $('#waveformSelectLFO').empty();
     
     $('#waveformSelectLFO').ddslick({
         data: oscillatorSelectData,
-        defaultSelectedIndex:0,
+        defaultSelectedIndex: oscillatorTypes.indexOf( window.waveformSettingLFO ) ,
         onSelected: function(data){
-            reviseWaveformLFO( data.selectedData.value );
+            reviseWaveform( "LFO", data.selectedData.value );
         }
     });
     
@@ -399,9 +607,9 @@ $( document ).ready(function() {
     
     $('#waveformSelect1').ddslick({
         data: oscillatorSelectData,
-        defaultSelectedIndex:0,
+        defaultSelectedIndex: oscillatorTypes.indexOf( window.waveformSetting1 ) ,
         onSelected: function(data){
-            reviseWaveform1( data.selectedData.value );
+            reviseWaveform( "1", data.selectedData.value );
         }
     });
     
@@ -409,9 +617,9 @@ $( document ).ready(function() {
     
     $('#waveformSelect2').ddslick({
         data: oscillatorSelectData,
-        defaultSelectedIndex:1,
+        defaultSelectedIndex: oscillatorTypes.indexOf( window.waveformSetting2 ) ,
         onSelected: function(data){
-            reviseWaveform2( data.selectedData.value );
+            reviseWaveform( "2", data.selectedData.value );
         }
     });
     
@@ -419,11 +627,19 @@ $( document ).ready(function() {
     
     $('#waveformSelect3').ddslick({
         data: oscillatorSelectData,
-        defaultSelectedIndex:2,
+        defaultSelectedIndex: oscillatorTypes.indexOf( window.waveformSetting3 ) ,
         onSelected: function(data){
-            reviseWaveform3( data.selectedData.value );
+            reviseWaveform( "3", data.selectedData.value );
         }
     });
+    
+    setSlidersandDropdowns();
+    
+    loadURLSettings ( URLSettingsOnLoad );
+    updateBalance( false );
+    
+    window.lowpassFilterNode.frequency.value = window.lowpassFilterFreq;
+    window.highpassFilterNode.frequency.value = window.highpassFilterFreq;
 
 });
     
@@ -465,59 +681,118 @@ function processMidiInput ( midiMessage ) {
     
     if ( midiInfo[0] == 128 || ( midiInfo[0] == 144 && midiInfo[2] == 0 ) ) { // Note off message
         var note = midiInfo[1];
-        turnNoteOff ( note );
+        turnNoteOff ( note, false );
     } else if ( midiInfo[0] == 144 ) { // Note on message                        
         var note = midiInfo[1];
         var velocity = midiInfo[2];
-        turnNoteOn ( note, velocity );
+        turnNoteOn ( note, velocity, false );
         $("#onScreenKeyboard").find("div" + "[data-index='" + ( note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").addClass("active");
     }
 }
 
-function turnNoteOn ( note, velocity ) {
-    for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
-            if ( window.synthStates[curSynth] == 128 ) {
-                window.synthStates[curSynth] = note;
-                window.synths[curSynth] = new Synth();
-                window.synths[curSynth].changeMidiVolume( (velocity / 128) ); // Gain is between 0 and 1.
-                window.synths[curSynth].changeMasterVolume( window.masterVolSetting )
-                
-                // Frequency of musical note from a midi note is (note A4 freq) * 2 ^ ( (note-69) / 12 ) 
-                // ^ symbol above denotes to the power of.
-                // See https://en.wikipedia.org/wiki/MIDI_Tuning_Standard for info
-                // Semitone offset and octave multiplier must also be taken into account.
-                
-                var note1 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc1.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc1.semitoneOffset);
-                var note2 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc2.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc2.semitoneOffset);
-                var note3 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc3.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc3.semitoneOffset);
-                
-                window.synths[curSynth].osc1.changeFrequency (
-                    window.noteA4Frequency * Math.pow( 2, ( ( note1 - 69 ) / 12 ) ) );
-                window.synths[curSynth].osc2.changeFrequency (
-                    window.noteA4Frequency * Math.pow( 2, ( ( note2 - 69 ) / 12 ) ) );
-                window.synths[curSynth].osc3.changeFrequency (
-                    window.noteA4Frequency * Math.pow( 2, ( ( note3 - 69 ) / 12 ) ) );
-                
-                window.synths[curSynth].connect();
-                window.synths[curSynth].start();
-                
-                $("#onScreenKeyboard").find("div" + "[data-index='" + ( note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").addClass("active");
-                
-                break;
+function turnNoteOn ( note, velocity, remote ) {
+        if ( !remote && window.collabReady ) {
+            var remoteNoteOnMessage = new Object();
+            remoteNoteOnMessage.msgtype = "noteon";
+            remoteNoteOnMessage.note = note;
+            remoteNoteOnMessage.velocity = velocity;
+            sendMessageToServer( remoteNoteOnMessage );
+            
+            setTimeout( function(  ){
+                for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+                    if ( window.synthStates[curSynth] == 128 ) {
+                        window.synthStates[curSynth] = note;
+                        window.synths[curSynth] = new Synth();
+                        window.synths[curSynth].changeMidiVolume( (velocity / 128) ); // Gain is between 0 and 1.
+                        window.synths[curSynth].changeMasterVolume( window.masterVolSetting )
+                        
+                        // Frequency of musical note from a midi note is (note A4 freq) * 2 ^ ( (note-69) / 12 ) 
+                        // ^ symbol above denotes to the power of.
+                        // See https://en.wikipedia.org/wiki/MIDI_Tuning_Standard for info
+                        // Semitone offset and octave multiplier must also be taken into account.
+                        
+                        var note1 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc1.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc1.semitoneOffset);
+                        var note2 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc2.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc2.semitoneOffset);
+                        var note3 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc3.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc3.semitoneOffset);
+                        
+                        window.synths[curSynth].osc1.changeFrequency (
+                            window.noteA4Frequency * Math.pow( 2, ( ( note1 - 69 ) / 12 ) ) );
+                        window.synths[curSynth].osc2.changeFrequency (
+                            window.noteA4Frequency * Math.pow( 2, ( ( note2 - 69 ) / 12 ) ) );
+                        window.synths[curSynth].osc3.changeFrequency (
+                            window.noteA4Frequency * Math.pow( 2, ( ( note3 - 69 ) / 12 ) ) );
+                        
+                        window.synths[curSynth].connect();
+                        window.synths[curSynth].start();
+                        
+                        $("#onScreenKeyboard").find("div" + "[data-index='" + ( note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").addClass("active");
+                        
+                        break;
+                    }
+                }
+            }, window.latencyEstDelay );
+        } else {
+        
+            for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+                if ( window.synthStates[curSynth] == 128 ) {
+                    window.synthStates[curSynth] = note;
+                    window.synths[curSynth] = new Synth();
+                    window.synths[curSynth].changeMidiVolume( (velocity / 128) ); // Gain is between 0 and 1.
+                    window.synths[curSynth].changeMasterVolume( window.masterVolSetting )
+                    
+                    // Frequency of musical note from a midi note is (note A4 freq) * 2 ^ ( (note-69) / 12 ) 
+                    // ^ symbol above denotes to the power of.
+                    // See https://en.wikipedia.org/wiki/MIDI_Tuning_Standard for info
+                    // Semitone offset and octave multiplier must also be taken into account.
+                    
+                    var note1 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc1.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc1.semitoneOffset);
+                    var note2 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc2.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc2.semitoneOffset);
+                    var note3 = parseInt( note ) + ( parseInt(window.synths[curSynth].osc3.octaveMultiplier) * 12 ) + parseInt(window.synths[curSynth].osc3.semitoneOffset);
+                    
+                    window.synths[curSynth].osc1.changeFrequency (
+                        window.noteA4Frequency * Math.pow( 2, ( ( note1 - 69 ) / 12 ) ) );
+                    window.synths[curSynth].osc2.changeFrequency (
+                        window.noteA4Frequency * Math.pow( 2, ( ( note2 - 69 ) / 12 ) ) );
+                    window.synths[curSynth].osc3.changeFrequency (
+                        window.noteA4Frequency * Math.pow( 2, ( ( note3 - 69 ) / 12 ) ) );
+                    
+                    window.synths[curSynth].connect();
+                    window.synths[curSynth].start();
+                    
+                    $("#onScreenKeyboard").find("div" + "[data-index='" + ( note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").addClass("active");
+                    
+                    break;
+                }
             }
         }
 }
 
-function turnNoteOff ( note ) {
-    $("#onScreenKeyboard").find("div" + "[data-index='" + (note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").removeClass("active");
-        
+function turnNoteOff ( note, remote ) {
+
+    if ( !remote && window.collabReady ) {
+            var remoteNoteOnMessage = new Object();
+            remoteNoteOnMessage.msgtype = "noteoff";
+            remoteNoteOnMessage.note = note;
+            sendMessageToServer( remoteNoteOnMessage );
+            
+            setTimeout( function(  ){
+                $("#onScreenKeyboard").find("div" + "[data-index='" + (note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").removeClass("active");
+                for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+                    if ( window.synthStates[curSynth] == note ) {
+                        window.synths[curSynth].setupReleaseCallback( curSynth );
+                        break;
+                    }
+                }
+            }, window.latencyEstDelay );
+    } else {
+        $("#onScreenKeyboard").find("div" + "[data-index='" + (note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").removeClass("active");
         for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
             if ( window.synthStates[curSynth] == note ) {
                 window.synths[curSynth].setupReleaseCallback( curSynth );
-                
                 break;
             }
         }
+    }
 }
 
 function switchMidiKeyboard () {
@@ -552,7 +827,7 @@ if (! window.AudioContext) {
 function changeA4Freq () {
     var A4FreqSelect = document.getElementById("A4FreqSelect");
     var newFreq = A4FreqSelect.options[A4FreqSelect.selectedIndex].value
-    window.noteA4Frequency = parseInt( newFreq );
+    setSetting ( "noteA4Frequency", parseFloat( newFreq ) );
 }
 
 function MasterVolumeTextChange () {
@@ -566,247 +841,148 @@ function changeOnScreenKeyboardOctaveSelect () {
     reviseOnScreenKeyboardOctave( newOctave );
 }
 
-function VolumeTextChangeLFO () {
-    var newVolSetting = document.getElementById("volume-knob-lfo").value;
-    reviseVolumeLFO( newVolSetting );
-}
-
 function FreqTextChangeLFO () {
     var newFreqSetting = document.getElementById("freq-knob-lfo").value;
     reviseFreqLFO( newFreqSetting );
 }
 
-function changeLFOWaveformSelect() {
-    var LFOWaveformSelect = document.getElementById("waveformSelectLFO");
-    var newType = LFOWaveformSelect.options[LFOWaveformSelect.selectedIndex].value;
-    reviseWaveformLFO( newType );
+function FreqTextChangeLowpass () {
+    var newFreqSetting = document.getElementById("freq-knob-lowpass").value;
+    reviseFreqLowpass( newFreqSetting );
 }
 
-function VolumeTextChange1 () {
-    var newVolSetting = document.getElementById("volume-knob-1").value;
-    reviseVolume1( newVolSetting );
+function FreqTextChangeHighpass () {
+    var newFreqSetting = document.getElementById("freq-knob-highpass").value;
+    reviseFreqHighpass( newFreqSetting );
 }
 
-function changeOsc1WaveformSelect() {
-    var osc1WaveformSelect = document.getElementById("waveformSelect1");
-    var newType = osc1WaveformSelect.options[osc1WaveformSelect.selectedIndex].value;
-    reviseWaveform1( newType );
+function VolumeTextChange ( oscName ) {
+    var newVolSetting = document.getElementById( "volume-knob-"+oscName ).value;
+    reviseVolume( oscName, newVolSetting );
 }
 
-function changeOsc1OctaveSelect() {
-    var osc1OctaveSelect = document.getElementById("octaveSelect1");
-    var newOctave = osc1OctaveSelect.options[osc1OctaveSelect.selectedIndex].value;
-    reviseOctave1( newOctave );
+function changeWaveformSelect( oscName ) {
+    var WaveformSelect = document.getElementById( "waveformSelect"+oscName );
+    var newType = WaveformSelect.options[WaveformSelect.selectedIndex].value;
+    reviseWaveform( oscName, newType );
 }
 
-function changeOsc1SemitoneSelect() {
-    var osc1SemitoneSelect = document.getElementById("semitoneSelect1");
-    var newVal = osc1SemitoneSelect.options[osc1SemitoneSelect.selectedIndex].value;
-    reviseSemitoneOffset1( newVal );
+function changeOctaveSelect( oscName ) {
+    var OctaveSelect = document.getElementById( "octaveSelect"+oscName );
+    var newOctave = OctaveSelect.options[OctaveSelect.selectedIndex].value;
+    reviseOctave( oscName, newOctave );
 }
 
-function VolumeTextChange2 () {
-    var newVolSetting = document.getElementById("volume-knob-2").value;
-    reviseVolume2( newVolSetting );
+function changeSemitoneSelect( oscName ) {
+    var SemitoneSelect = document.getElementById( "semitoneSelect"+oscName );
+    var newVal = SemitoneSelect.options[SemitoneSelect.selectedIndex].value;
+    reviseSemitoneOffset( oscName,  newVal );
 }
 
-function changeOsc2WaveformSelect() {
-    var osc2WaveformSelect = document.getElementById("waveformSelect2");
-    var newType = osc2WaveformSelect.options[osc2WaveformSelect.selectedIndex].value;
-    reviseWaveform2( newType );
+function setSetting ( setting, value ){
+    if ( window.collabReady ) {
+        var remoteSettingChangeMessage = new Object();
+        remoteSettingChangeMessage.msgtype = "setting-change";
+        remoteSettingChangeMessage.setting = setting;
+        remoteSettingChangeMessage.value = value;
+        sendMessageToServer( remoteSettingChangeMessage );
+        
+        setTimeout( function() {
+            window[setting] = value;
+            saveSetting( setting, value );
+            updateShareLink();
+        }, window.latencyEstDelay );
+    } else {
+        window[setting] = value;
+        saveSetting( setting, value );
+        updateShareLink();
+    }
 }
 
-function changeOsc2OctaveSelect() {
-    var osc2OctaveSelect = document.getElementById("octaveSelect2");
-    var newOctave = osc2OctaveSelect.options[osc2OctaveSelect.selectedIndex].value;
-    reviseOctave2( newOctave );
-}
-
-function changeOsc2SemitoneSelect() {
-    var osc2SemitoneSelect = document.getElementById("semitoneSelect2");
-    var newVal = osc2SemitoneSelect.options[osc2SemitoneSelect.selectedIndex].value;
-    reviseSemitoneOffset2( newVal );
-}
-
-function VolumeTextChange3 () {
-    var newVolSetting = document.getElementById("volume-knob-3").value;
-    reviseVolume3( newVolSetting );
-}
-
-function changeOsc3WaveformSelect() {
-    var osc3WaveformSelect = document.getElementById("waveformSelect3");
-    var newType = osc3WaveformSelect.options[osc3WaveformSelect.selectedIndex].value;
-    reviseWaveform3( newType );
-}
-
-function changeOsc3OctaveSelect() {
-    var osc3OctaveSelect = document.getElementById("octaveSelect3");
-    var newOctave = osc3OctaveSelect.options[osc3OctaveSelect.selectedIndex].value;
-    reviseOctave3( newOctave );
-}
-
-function changeOsc3SemitoneSelect() {
-    var osc3SemitoneSelect = document.getElementById("semitoneSelect3");
-    var newVal = osc3SemitoneSelect.options[osc3SemitoneSelect.selectedIndex].value;
-    reviseSemitoneOffset3( newVal );
+function setSettingRemotely ( setting, value ){
+    window[setting] = value;
+    saveSetting( setting, value );
+    updateShareLink();
 }
 
 function reviseMasterVolume ( vol ) {
-    window.masterVolSetting = vol;
+    setSetting ( "masterVolSetting", vol );
     volumeNode.gain.value = vol / 100;
 }
 
 function reviseOnScreenKeyboardOctave ( newOctave ) {
-    window.onScreenKeyboardOctave = newOctave;
-}
-
-function reviseVolumeLFO ( vol ) {
-    window.LFOvol = vol;
+    setSetting( "onScreenKeyboardOctave", newOctave );
 }
 
 function reviseFreqLFO ( freq ) {
-    window.LFOfreq = freq;
+    setSetting( "freqSettingLFO", freq );
 }
 
-function reviseWaveformLFO ( type ) {
-    window.LFOwaveform = type;
+function reviseFreqLowpass( freq ) {
+    window.lowpassFilterNode.frequency.value = freq;
+    setSetting( "lowpassFilterFreq", freq );
 }
 
-function reviseVolume1 ( vol ) {
-    window.volSetting1 = vol;
+function reviseFreqHighpass( freq ) {
+    window.highpassFilterNode.frequency.value = freq;
+    setSetting( "highpassFilterFreq", freq );
 }
 
-function reviseWaveform1 ( type ) {
-    window.waveformSetting1 = type;
+function reviseVolume ( oscName, vol ) {
+    setSetting ( "volSetting"+oscName, vol );
 }
 
-function reviseOctave1 ( newOctave ) {
-    window.OctaveMultiplierValue1 = newOctave;
+function reviseWaveform ( oscName, type ) {
+    setSetting ( "waveformSetting"+oscName, type );
 }
 
-function reviseSemitoneOffset1 ( newVal ) {
-    window.SemitoneOffsetValue1 = newVal;
+function reviseOctave ( oscName, newOctave ) {
+    setSetting ( "OctaveMultiplierValue"+oscName, newOctave );
 }
 
-function reviseVolume2 ( vol ) {
-    window.volSetting2 = vol;
+function reviseSemitoneOffset ( oscName, newVal ) {
+    setSetting ( "SemitoneOffsetValue"+oscName, newVal );
 }
 
-function reviseWaveform2 ( type ) {
-    window.waveformSetting2 = type;
+function reviseAttack ( oscName, newMsVal ) {
+    setSetting ( "AttackSetting"+oscName, ( newMsVal / 1000 ) );
 }
 
-function reviseOctave2 ( newOctave ) {
-    window.OctaveMultiplierValue2 = newOctave;
+function reviseDecay ( oscName, newMsVal ) {
+    setSetting ( "DecaySetting"+oscName, ( newMsVal / 1000 ) );
 }
 
-function reviseSemitoneOffset2 ( newVal ) {
-    window.SemitoneOffsetValue2 = newVal;
+function reviseSustain ( oscName, newVol ) {
+    setSetting ( "SustainSetting"+oscName, newVol );
 }
 
-function reviseVolume3 ( vol ) {
-    window.volSetting3 = vol;
+function reviseRelease ( oscName, newMsVal ) {
+    setSetting ( "ReleaseSetting"+oscName, ( newMsVal / 1000 ) );
 }
 
-function reviseWaveform3 ( type ) {
-    window.waveformSetting3 = type;
-}
-
-function reviseOctave3 ( newOctave ) {
-    window.OctaveMultiplierValue3 = newOctave;
-}
-
-function reviseSemitoneOffset3 ( newVal ) {
-    window.SemitoneOffsetValue3 = newVal;
-}
-
-function reviseAttack1 ( newMsVal ) {
-    window.AttackSetting1 = ( newMsVal / 1000 );
-}
-
-function reviseDecay1 ( newMsVal ) {
-    window.DecaySetting1 = ( newMsVal / 1000 );
-}
-
-function reviseSustain1 ( newVol ) {
-    window.SustainSetting1 = ( newVol );
-}
-
-function reviseRelease1 ( newMsVal ) {
-    window.ReleaseSetting1 = ( newMsVal / 1000 );
-}
-
-function reviseAttack2 ( newMsVal ) {
-    window.AttackSetting2 = ( newMsVal / 1000 );
-}
-
-function reviseDecay2 ( newMsVal ) {
-    window.DecaySetting2 = ( newMsVal / 1000 );
-}
-
-function reviseSustain2 ( newVol ) {
-    window.SustainSetting2 = ( newVol );
-}
-
-function reviseRelease2 ( newMsVal ) {
-    window.ReleaseSetting2 = ( newMsVal / 1000 );
-}
-
-function reviseAttack3 ( newMsVal ) {
-    window.AttackSetting3 = ( newMsVal / 1000 );
-}
-
-function reviseDecay3 ( newMsVal ) {
-    window.DecaySetting3 = ( newMsVal / 1000 );
-}
-
-function reviseSustain3 ( newVol ) {
-    window.SustainSetting3 = ( newVol );
-}
-
-function reviseRelease3 ( newMsVal ) {
-    window.ReleaseSetting3 = ( newMsVal / 1000 );
-}
-
-function reviseAttackLFO ( newMsVal ) {
-    window.LFOattack = ( newMsVal / 1000 );
-}
-
-function reviseDecayLFO ( newMsVal ) {
-    window.LFOdecay = ( newMsVal / 1000 );
-}
-
-function reviseSustainLFO ( newVol ) {
-    window.LFOsustain = ( newVol );
-}
-
-function reviseReleaseLFO ( newMsVal ) {
-    window.LFOrelease = ( newMsVal / 1000 );
-}
-
-function updateAttackText1 ( ) {
-    var attackSelect1 = document.getElementById("attackSelect1");
-    var attackDisplay1 = document.getElementById("attackDisplay1");
+function updateAttackText ( oscName ) {
+    var attackSelect = document.getElementById( "attackSelect"+oscName );
+    var attackDisplay = document.getElementById( "attackDisplay"+oscName );
     
-    var newLinVal = attackSelect1.value;
+    var newLinVal = attackSelect.value;
     var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
     
-    attackDisplay1.value = newVal.toFixed(2);
+    attackDisplay.value = newVal.toFixed(2);
     
-    reviseAttack1( attackDisplay1.value );
+    reviseAttack( oscName, attackDisplay.value );
 }
 
-function updateAttackSlider1 ( ) {
-    var attackDisplay1 = document.getElementById("attackDisplay1");
-    var attackSelect1 = document.getElementById("attackSelect1");
+function updateAttackSlider ( oscName ) {
+    var attackDisplay = document.getElementById( "attackDisplay"+oscName );
+    var attackSelect = document.getElementById( "attackSelect"+oscName );
     
-    var newVal = attackDisplay1.value;
+    var newVal = attackDisplay.value;
     
     var max = true;
     var curIndex = 0;
     for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
         if ( window.expVals[curIndex] >= newVal ) {
-            attackSelect1.value = curVal;
+            attackSelect.value = curVal;
             max = false;
             break;
         }
@@ -814,35 +990,35 @@ function updateAttackSlider1 ( ) {
     }
     
     if ( max ) {
-        attackSelect1.value = 5.5;
+        attackSelect.value = 5.5;
     }
     
-    reviseAttack1( attackDisplay1.value );
+    reviseAttack( oscName, attackDisplay.value );
 }
 
-function updateDecayText1 ( newVol ) {
-    var decaySelect1 = document.getElementById("decaySelect1");
-    var decayDisplay1 = document.getElementById("decayDisplay1");
+function updateDecayText ( oscName ) {
+    var decaySelect = document.getElementById( "decaySelect"+oscName );
+    var decayDisplay = document.getElementById( "decayDisplay"+oscName );
     
-    var newLinVal = decaySelect1.value;
+    var newLinVal = decaySelect.value;
     var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
     
-    decayDisplay1.value = newVal.toFixed(2);
+    decayDisplay.value = newVal.toFixed(2);
     
-    reviseDecay1( decayDisplay1.value );
+    reviseDecay( oscName, decayDisplay.value );
 }
 
-function updateDecaySlider1 ( newVol ) {                    
-    var decayDisplay1 = document.getElementById("decayDisplay1");
-    var decaySelect1 = document.getElementById("decaySelect1");
+function updateDecaySlider ( oscName ) {                
+    var decayDisplay = document.getElementById( "decayDisplay"+oscName );
+    var decaySelect = document.getElementById( "decaySelect"+oscName );
     
-    var newVal = decayDisplay1.value;
+    var newVal = decayDisplay.value;
     
     var max = true;
     var curIndex = 0;
     for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
         if ( window.expVals[curIndex] >= newVal ) {
-            decaySelect1.value = curVal;
+            decaySelect.value = curVal;
             max = false;
             break;
         }
@@ -850,54 +1026,54 @@ function updateDecaySlider1 ( newVol ) {
     }
     
     if ( max ) {
-        decaySelect1.value = 5.5;
+        decaySelect.value = 5.5;
     }
     
-    reviseDecay1( decayDisplay1.value );
+    reviseDecay( oscName, decayDisplay.value );
 }
 
-function updateSustainText1 ( ) {
-    var sustainSelect1 = document.getElementById("sustainSelect1");
-    var sustainDisplay1 = document.getElementById("sustainDisplay1");
-    var newVal = sustainSelect1.value;
+function updateSustainText ( oscName ) {
+    var sustainSelect = document.getElementById( "sustainSelect"+oscName );
+    var sustainDisplay = document.getElementById( "sustainDisplay"+oscName );
+    var newVal = sustainSelect.value;
     
-    sustainDisplay1.value = newVal;
-    reviseSustain1( sustainSelect1.value );
+    sustainDisplay.value = newVal;
+    reviseSustain( oscName, sustainSelect.value );
 }
 
-function updateSustainSlider1 ( ) {
-    var sustainDisplay1 = document.getElementById("sustainDisplay1");
-    var sustainSelect1 = document.getElementById("sustainSelect1");
+function updateSustainSlider ( oscName ) {
+    var sustainDisplay = document.getElementById( "sustainDisplay"+oscName );
+    var sustainSelect = document.getElementById( "sustainSelect"+oscName );
     
-    var newVal = sustainDisplay1.value;
-    sustainSelect1.value = newVal;
+    var newVal = sustainDisplay.value;
+    sustainSelect.value = newVal;
     
-    reviseSustain1( sustainDisplay1.value );
+    reviseSustain( oscName, sustainDisplay.value );
 }
 
-function updateReleaseText1 ( ) {
-    var releaseSelect1 = document.getElementById("releaseSelect1");
-    var releaseDisplay1 = document.getElementById("releaseDisplay1");
+function updateReleaseText ( oscName ) {
+    var releaseSelect = document.getElementById( "releaseSelect"+oscName );
+    var releaseDisplay = document.getElementById( "releaseDisplay"+oscName );
     
-    var newLinVal = releaseSelect1.value;
+    var newLinVal = releaseSelect.value;
     var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
     
-    releaseDisplay1.value = newVal.toFixed(2);
+    releaseDisplay.value = newVal.toFixed(2);
     
-    reviseRelease1( releaseDisplay1.value );
+    reviseRelease( oscName, releaseDisplay.value );
 }
 
-function updateReleaseSlider1 ( ) {
-    var releaseDisplay1 = document.getElementById("releaseDisplay1");
-    var releaseSelect1 = document.getElementById("releaseSelect1");
+function updateReleaseSlider ( oscName ) {
+    var releaseDisplay = document.getElementById( "releaseDisplay"+oscName );
+    var releaseSelect = document.getElementById( "releaseSelect"+oscName );
     
-    var newVal = releaseDisplay1.value;
+    var newVal = releaseDisplay.value;
     
     var max = true;
     var curIndex = 0;
     for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
         if ( window.expVals[curIndex] >= newVal ) {
-            releaseSelect1.value = curVal;
+            releaseSelect.value = curVal;
             max = false;
             break;
         }
@@ -905,391 +1081,10 @@ function updateReleaseSlider1 ( ) {
     }
     
     if ( max ) {
-        releaseSelect1.value = 5.5;
+        releaseSelect.value = 5.5;
     }
     
-    reviseRelease1( releaseDisplay1.value );
-}
-
-function updateAttackText2 ( ) {
-    var attackSelect2 = document.getElementById("attackSelect2");
-    var attackDisplay2 = document.getElementById("attackDisplay2");
-    
-    var newLinVal = attackSelect2.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    attackDisplay2.value = newVal.toFixed(2);
-    
-    reviseAttack2( attackDisplay2.value );
-}
-
-function updateAttackSlider2 ( ) {
-    var attackDisplay2 = document.getElementById("attackDisplay2");
-    var attackSelect2 = document.getElementById("attackSelect2");
-    
-    var newVal = attackDisplay2.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            attackSelect2.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        attackSelect2.value = 5.5;
-    }
-    
-    reviseAttack2( attackDisplay2.value );
-}
-
-function updateDecayText2 ( newVol ) {
-    var decaySelect2 = document.getElementById("decaySelect2");
-    var decayDisplay2 = document.getElementById("decayDisplay2");
-    
-    var newLinVal = decaySelect2.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    decayDisplay2.value = newVal.toFixed(2);
-    
-    reviseDecay2( decayDisplay2.value );
-}
-
-function updateDecaySlider2 ( newVol ) {                    
-    var decayDisplay2 = document.getElementById("decayDisplay2");
-    var decaySelect2 = document.getElementById("decaySelect2");
-    
-    var newVal = decayDisplay2.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            decaySelect2.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        decaySelect2.value = 5.5;
-    }
-    
-    reviseDecay2( decayDisplay2.value );
-}
-
-function updateSustainText2 ( ) {
-    var sustainSelect2 = document.getElementById("sustainSelect2");
-    var sustainDisplay2 = document.getElementById("sustainDisplay2");
-    var newVal = sustainSelect2.value;
-    
-    sustainDisplay2.value = newVal;
-    reviseSustain2( sustainSelect2.value );
-}
-
-function updateSustainSlider2 ( ) {
-    var sustainDisplay2 = document.getElementById("sustainDisplay2");
-    var sustainSelect2 = document.getElementById("sustainSelect2");
-    
-    var newVal = sustainDisplay2.value;
-    sustainSelect2.value = newVal;
-    
-    reviseSustain2( sustainDisplay2.value );
-}
-
-function updateReleaseText2 ( ) {
-    var releaseSelect2 = document.getElementById("releaseSelect2");
-    var releaseDisplay2 = document.getElementById("releaseDisplay2");
-    
-    var newLinVal = releaseSelect2.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    releaseDisplay2.value = newVal.toFixed(2);
-    
-    reviseRelease2( releaseDisplay2.value );
-}
-
-function updateReleaseSlider2 ( ) {
-    var releaseDisplay2 = document.getElementById("releaseDisplay2");
-    var releaseSelect2 = document.getElementById("releaseSelect2");
-    
-    var newVal = releaseDisplay2.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            releaseSelect2.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        releaseSelect2.value = 5.5;
-    }
-    
-    reviseRelease2( releaseDisplay2.value );
-}
-
-function updateAttackText3 ( ) {
-    var attackSelect3 = document.getElementById("attackSelect3");
-    var attackDisplay3 = document.getElementById("attackDisplay3");
-    
-    var newLinVal = attackSelect3.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    attackDisplay3.value = newVal.toFixed(2);
-    
-    reviseAttack3( attackDisplay3.value );
-}
-
-function updateAttackSlider3 ( ) {
-    var attackDisplay3 = document.getElementById("attackDisplay3");
-    var attackSelect3 = document.getElementById("attackSelect3");
-    
-    var newVal = attackDisplay3.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            attackSelect3.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        attackSelect3.value = 5.5;
-    }
-    
-    reviseAttack3( attackDisplay3.value );
-}
-
-function updateDecayText3 ( newVol ) {
-    var decaySelect3 = document.getElementById("decaySelect3");
-    var decayDisplay3 = document.getElementById("decayDisplay3");
-    
-    var newLinVal = decaySelect3.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    decayDisplay3.value = newVal.toFixed(2);
-    
-    reviseDecay3( decayDisplay3.value );
-}
-
-function updateDecaySlider3 ( newVol ) {                    
-    var decayDisplay3 = document.getElementById("decayDisplay3");
-    var decaySelect3 = document.getElementById("decaySelect3");
-    
-    var newVal = decayDisplay3.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            decaySelect3.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        decaySelect3.value = 5.5;
-    }
-    
-    reviseDecay3( decayDisplay3.value );
-}
-
-function updateSustainText3 ( ) {
-    var sustainSelect3 = document.getElementById("sustainSelect3");
-    var sustainDisplay3 = document.getElementById("sustainDisplay3");
-    var newVal = sustainSelect3.value;
-    
-    sustainDisplay3.value = newVal;
-    reviseSustain3( sustainSelect3.value );
-}
-
-function updateSustainSlider3 ( ) {
-    var sustainDisplay3 = document.getElementById("sustainDisplay3");
-    var sustainSelect3 = document.getElementById("sustainSelect3");
-    
-    var newVal = sustainDisplay3.value;
-    sustainSelect3.value = newVal;
-    
-    reviseSustain3( sustainDisplay3.value );
-}
-
-function updateReleaseText3 ( ) {
-    var releaseSelect3 = document.getElementById("releaseSelect3");
-    var releaseDisplay3 = document.getElementById("releaseDisplay3");
-    
-    var newLinVal = releaseSelect3.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    releaseDisplay3.value = newVal.toFixed(2);
-    
-    reviseRelease3( releaseDisplay3.value );
-}
-
-function updateReleaseSlider3 ( ) {
-    var releaseDisplay3 = document.getElementById("releaseDisplay3");
-    var releaseSelect3 = document.getElementById("releaseSelect3");
-    
-    var newVal = releaseDisplay3.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            releaseSelect3.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        releaseSelect3.value = 5.5;
-    }
-    
-    reviseRelease3( releaseDisplay3.value );
-}
-
-                function updateAttackTextLFO ( ) {
-    var attackSelectLFO = document.getElementById("attackSelectLFO");
-    var attackDisplayLFO = document.getElementById("attackDisplayLFO");
-    
-    var newLinVal = attackSelectLFO.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    attackDisplayLFO.value = newVal.toFixed(2);
-    
-    reviseAttackLFO( attackDisplayLFO.value );
-}
-
-function updateAttackSliderLFO ( ) {
-    var attackDisplayLFO = document.getElementById("attackDisplayLFO");
-    var attackSelectLFO = document.getElementById("attackSelectLFO");
-    
-    var newVal = attackDisplayLFO.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            attackSelectLFO.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        attackSelectLFO.value = 5.5;
-    }
-    
-    reviseAttackLFO( attackDisplayLFO.value );
-}
-
-function updateDecayTextLFO ( newVol ) {
-    var decaySelectLFO = document.getElementById("decaySelectLFO");
-    var decayDisplayLFO = document.getElementById("decayDisplayLFO");
-    
-    var newLinVal = decaySelectLFO.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    decayDisplayLFO.value = newVal.toFixed(2);
-    
-    reviseDecayLFO( decayDisplayLFO.value );
-}
-
-function updateDecaySliderLFO ( newVol ) {                    
-    var decayDisplayLFO = document.getElementById("decayDisplayLFO");
-    var decaySelectLFO = document.getElementById("decaySelectLFO");
-    
-    var newVal = decayDisplayLFO.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            decaySelectLFO.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        decaySelectLFO.value = 5.5;
-    }
-    
-    reviseDecayLFO( decayDisplayLFO.value );
-}
-
-function updateSustainTextLFO ( ) {
-    var sustainSelectLFO = document.getElementById("sustainSelectLFO");
-    var sustainDisplayLFO = document.getElementById("sustainDisplayLFO");
-    var newVal = sustainSelectLFO.value;
-    
-    sustainDisplayLFO.value = newVal;
-    reviseSustainLFO( sustainSelectLFO.value );
-}
-
-function updateSustainSliderLFO ( ) {
-    var sustainDisplayLFO = document.getElementById("sustainDisplayLFO");
-    var sustainSelectLFO = document.getElementById("sustainSelectLFO");
-    
-    var newVal = sustainDisplayLFO.value;
-    sustainSelectLFO.value = newVal;
-    
-    reviseSustainLFO( sustainDisplayLFO.value );
-}
-
-function updateReleaseTextLFO ( ) {
-    var releaseSelectLFO = document.getElementById("releaseSelectLFO");
-    var releaseDisplayLFO = document.getElementById("releaseDisplayLFO");
-    
-    var newLinVal = releaseSelectLFO.value;
-    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
-    
-    releaseDisplayLFO.value = newVal.toFixed(2);
-    
-    reviseReleaseLFO( releaseDisplayLFO.value );
-}
-
-function updateReleaseSliderLFO ( ) {
-    var releaseDisplayLFO = document.getElementById("releaseDisplayLFO");
-    var releaseSelectLFO = document.getElementById("releaseSelectLFO");
-    
-    var newVal = releaseDisplayLFO.value;
-    
-    var max = true;
-    var curIndex = 0;
-    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
-        if ( window.expVals[curIndex] >= newVal ) {
-            releaseSelectLFO.value = curVal;
-            max = false;
-            break;
-        }
-        curIndex++;
-    }
-    
-    if ( max ) {
-        releaseSelectLFO.value = 5.5;
-    }
-    
-    reviseReleaseLFO( releaseDisplayLFO.value );
+    reviseRelease( oscName, releaseDisplay.value );
 }
 
 function startRecording() {
@@ -1376,25 +1171,416 @@ function pressRecordButton () {
 }
 
 function saveSetting ( settingName, value ) {
-    localStorage.setItem( settingName , value );
+    localStorage.setItem( "setting-"+settingName , value );
 }
 
 function loadSettings() {
-    var settings = Array();
     for ( var curSetting = 0; curSetting < localStorage.length; curSetting++ ){
-        window[ localStorage.key(curSetting) ] = localStorage.getItem( localStorage.key(curSetting) );
+        if ( localStorage.key(curSetting).substring(0, 8) === "setting-" ) {
+            var setting = localStorage.key(curSetting);
+            if ( setting.indexOf("waveform") > -1 ) {
+                window[ setting.substring( 8, setting.length ) ] = localStorage.getItem( setting );
+            } else if ( setting.indexOf("Attack") > -1 || setting.indexOf("Decay") > -1 || setting.indexOf("Release") > -1 ) {
+                window[ setting.substring( 8, setting.length ) ] = ( parseFloat( localStorage.getItem( setting ) ) * 1000 ).toFixed(2);
+            } else if ( setting.indexOf("Sustain") > -1 ) {
+                // Sustain is linear rather than exponential.
+                window[ setting.substring( 8, setting.length ) ] = ( parseFloat( localStorage.getItem( setting ) ) ).toFixed(2);
+            } else {
+                window[ setting.substring( 8, setting.length ) ] = parseFloat( localStorage.getItem( setting ) );
+            }
+        }
     }
 }
 
+function setSlidersandDropdowns () {
+    var oscNames = [ "LFO", "1", "2", "3" ];
+    var numberedOscNames = [ "1", "2", "3" ];
+    var envelopeControls = ["Attack", "Decay", "Sustain", "Release"];
+    
+    oscNames.forEach( function( oscName ) {
+        envelopeControls.forEach( function( control ) {
+            var Display = document.getElementById( control.toLowerCase() + "Display"+oscName );
+            Display.value = control == "Sustain" ? window[ control + "Setting" + oscName ] : parseFloat( window[ control + "Setting" + oscName ] ).toFixed(2);
+            window[ "update" + control + "Slider" ]( oscName );
+        } );
+    } );
+    
+    numberedOscNames.forEach( function( numOscName ) {
+        document.getElementById( "semitoneSelect" + numOscName ).value = window[ "SemitoneOffsetValue" + numOscName ];
+        document.getElementById( "octaveSelect" + numOscName ).value = window[ "OctaveMultiplierValue" + numOscName ];
+    } );
+
+    document.getElementById( "onScreenKeyboardOctaveSelect" ).value = window[ "onScreenKeyboardOctave" ];
+    document.getElementById( "A4FreqSelect" ).value = window[ "noteA4Frequency" ];
+    
+    updateBalanceDisplay( window.balance );
+    updateBalanceSlider( window.balance );
+}
+
+function createSettingsFile () {
+    var oscNames = [ "LFO", "1", "2", "3" ];
+    var numberedOscNames = [ "1", "2", "3" ];
+    
+    var settings = new Object();
+    
+    settings['noteA4Frequency'] = window.noteA4Frequency;
+    settings['masterVolSetting'] = window.masterVolSetting;
+    settings['onScreenKeyboardOctave'] = window.onScreenKeyboardOctave;
+    settings['balance'] = window.balance;
+    settings['lowpassFilterFreq'] = window.lowpassFilterFreq;
+    settings['highpassFilterFreq'] = window.highpassFilterFreq;
+    
+    settings['collabId'] = window.collabId;
+    
+    settings["freqSettingLFO"] = window["freqSettingLFO"];
+    
+    oscNames.forEach( function( oscName ) {
+        settings["volSetting"+oscName] = window["volSetting"+oscName];
+        settings["freqSetting"+oscName] = window["freqSetting"+oscName];
+        settings["waveformSetting"+oscName] = window["waveformSetting"+oscName];
+        settings["AttackSetting"+oscName] = ( window["AttackSetting"+oscName] * 1000 ).toFixed(5) ;
+        settings["DecaySetting"+oscName] = ( window["DecaySetting"+oscName] * 1000 ).toFixed(5);
+        settings["SustainSetting"+oscName] = window["SustainSetting"+oscName];
+        settings["ReleaseSetting"+oscName] = ( window["ReleaseSetting"+oscName] * 1000 ).toFixed(5);
+    } );
+    
+    numberedOscNames.forEach( function( numOscName ) {
+        settings["OctaveMultiplierValue"+numOscName] = window["OctaveMultiplierValue"+numOscName];
+        settings["SemitoneOffsetValue"+numOscName] = window["SemitoneOffsetValue"+numOscName];
+    } );
+    
+    return settings;
+}
+
 function downloadSettingsFile () {
-    // Use JSON
+    var settings = createSettingsFile();
+    
+    var JSONSettings = JSON.stringify( settings );
+    
+    var JSONDownload = "data:text/json;charset=utf-8," + encodeURIComponent( JSONSettings );
+    var date = new Date();
+    var JSONDownloadLink = document.createElement("a");
+    JSONDownloadLink.download = "synth-preset-" + date.getDate() + "-" + date.getMonth() + "-" + date.getFullYear() + " " + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds() + "-" + date.getMilliseconds() + ".json";
+    JSONDownloadLink.href = JSONDownload;
+    JSONDownloadLink.click();
+}
+
+function loadSettingsFile ( event ) {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    var file;
+    if ( event.dataTransfer ) {
+        file = event.dataTransfer.files[0];
+    } else {
+        file = event.target.files[0];
+    }
+    
+    if ( file ) {
+        var fReader = new FileReader();
+        fReader.readAsText( file );
+        fReader.onload = function( event ) {
+            var JSONString = event.target.result;
+            loadSettingsJSON ( JSONString );
+        }
+    }
+    
     
 }
 
-function loadSettingsFile ( JSONSettings ) {
-                        
+function loadSettingsJSON ( JSONString ) {
+    try {
+        var SettingsObject = JSON.parse( JSONString );
+        loadSettingsObject ( SettingsObject, true, true );
+    } catch( exc ) {
+        alert("Invalid settings file");
+    }
+}
+
+function loadSettingsObject ( SettingsObject, setGUI, overwriteLocal ) {
+    var SettingsObjectKeys = Object.keys(SettingsObject);
+    
+    var settingsKeys = Object.keys( createSettingsFile() );
+    
+    var settingsValid = true;
+    SettingsObjectKeys.forEach( function( JSONsettingsKey ) {
+        if ( settingsKeys.indexOf( JSONsettingsKey ) == -1 ) {
+            settingsValid = false;
+        }
+    } );
+    
+    if ( settingsValid ) {
+        SettingsObjectKeys.forEach( function( JSONsettingsKey ) {
+            if ( overwriteLocal ) {
+                setSettingRemotely( JSONsettingsKey, SettingsObject[JSONsettingsKey] );
+            } else {
+                window[JSONsettingsKey] = SettingsObject[JSONsettingsKey];
+            }
+        } );
+        
+        if ( setGUI ) {
+            updateGUI();
+        }
+    } else {
+        alert( "Invalid settings object" );
+    }
 }
 
 function resetToDefault () {
+    loadSettingsObject( defaultSettings, true, true );
+}
+
+// Taken from http://stackoverflow.com/a/21903119/5688277
+// and modified.
+// Tested & working.
+function getUrlSettings() {
+    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    var URLSettings = new Object();
+        
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+        // stop no parameters from diaplaying invalid settings message due to object having one key (the empty string).
+        if ( sParameterName[0] !== "" ) {
+            URLSettings[ sParameterName[0] ] = sParameterName[1];
+        }
+    }
+
+    return URLSettings;
+};
+
+function loadURLSettings ( SettingsObject ) {
+    loadSettingsObject( SettingsObject, true, true );
+}
+
+function generateShareURL ( fullURL ) {
+    var settings = createSettingsFile();
     
+    var SettingsObjectKeys = Object.keys(settings);
+    var settingsString = "";
+    var curSetting = 0;
+    
+    SettingsObjectKeys.forEach( function( settingsKey ) {
+        if ( curSetting === 0 ) {
+            settingsString += "?";
+        } else {
+            settingsString += "&";
+        }
+        settingsString += settingsKey + "=" + settings[settingsKey];
+        curSetting++;
+    } );
+    
+    return fullURL ? window.location.origin + window.location.pathname + settingsString : window.location.pathname + settingsString ;
+}
+
+function updateShareLink () {
+    var shareTextBox = document.getElementById("shareText");
+    shareTextBox.value = generateShareURL( true );
+    if ( window.location.protocol !== "file:" ) {
+        history.pushState(null, null, generateShareURL( false ) );
+    }
+}
+
+function updateBalance ( remote ) {
+    var balanceSlider = document.getElementById("balance-slider");
+    var newBalanceVal = parseFloat( balanceSlider.value );
+    if ( remote ) {
+        setSettingRemotely( "balance", newBalanceVal );
+    } else {
+        setSetting( "balance", newBalanceVal );
+    }
+    window.stereoPannerNode.pan.value = newBalanceVal;
+    updateBalanceDisplay( newBalanceVal );
+}
+
+function updateBalanceDisplay ( newBalanceVal ) {
+    var balanceDisplay = document.getElementById("balance-display");
+    if ( newBalanceVal == 0 ) {
+        balanceDisplay.innerHTML = "C";
+    } else if ( newBalanceVal < 0 ) {
+        balanceString = newBalanceVal.toFixed(2).toString();
+        balanceDisplay.innerHTML = balanceString.substring( 1, balanceString.length ) + "L";
+    } else {
+        balanceString = newBalanceVal.toFixed(2).toString();
+        balanceDisplay.innerHTML = balanceString + "R";
+    }
+}
+
+function updateBalanceSlider ( newBalanceVal ) {
+    var balanceSlider = document.getElementById("balance-slider");
+    balanceSlider.value = newBalanceVal;
+}
+
+function changePreset () {
+    if ( window.collabReady ) {
+        var presetSelect = document.getElementById("select-preset");
+        var selectedPreset = presetSelect.options[presetSelect.selectedIndex].value;
+        
+        var newMessage = new Object();
+        newMessage.msgtype = "preset-change";
+        newMessage.preset = selectedPreset;
+        sendMessageToServer ( newMessage );
+        
+        setTimeout( function() {
+            loadSettingsObject( presetsList[selectedPreset].preset, true, true );
+        }, window.latencyEstDelay )
+    } else {
+        var presetSelect = document.getElementById("select-preset");
+        var selectedPreset = presetSelect.options[presetSelect.selectedIndex].value;
+        loadSettingsObject( presetsList[selectedPreset].preset, true, true );
+    }
+    
+}
+
+function changePresetAndUpdateGUI ( newPreset ) {
+    var presetSelect = document.getElementById("select-preset");
+    presetSelect.value = newPreset;
+    changePreset();
+}
+
+function populatePresets () {
+    var presetSelect = document.getElementById("select-preset");
+    var presetKeys = Object.keys( presetsList );
+    for ( var curPreset = 0; curPreset < presetKeys.length; curPreset++ ) {
+        var presetOptionTag = new Option( presetsList[ presetKeys[curPreset] ].title, presetKeys[curPreset] );
+        presetSelect.add( presetOptionTag );
+    }
+}
+
+function connectToServer () {
+    window.CollabState = 0;
+    window.CollabSocket = new WebSocket( serverURL );
+    
+    
+    window.CollabSocket.onopen = function (e) {
+        console.log("Socket opened.");
+    };
+    
+    window.CollabSocket.onclose = function (e) {
+        console.log("Socket closed.");
+    };
+    
+    window.CollabSocket.onmessage = function (event) {
+        console.log(event.data);
+        var receviedMessage = event.data;
+        var receivedObject = JSON.parse( receviedMessage );
+        
+        switch ( window.CollabState ) {
+            case 0:
+                if ( receivedObject.msgtype === "id" ) {
+                    // If ID is set, send setID message. If not, send getId message
+                    if ( window.collabId === "" ) {
+                        var newMessage = new Object();
+                        newMessage.msgtype = "getid";
+                        newMessage.name = window.chatName;
+                        sendMessageToServer ( newMessage );
+                        window.CollabState = 1;
+                    } else {
+                        // set id
+                        var newMessage = new Object();
+                        newMessage.msgtype = "setid";
+                        newMessage.collabid = window.collabId;
+                        newMessage.name = window.chatName;
+                        sendMessageToServer ( newMessage );
+                        window.CollabState = 2;
+                    }
+                    window.latencyEstSendTime = Date.now();
+                }
+                break;
+            case 1: // getid sent, waiting on response.
+                if ( receivedObject.msgtype === "setid" ) {
+                    setSetting ( "collabId", receivedObject.collabid );
+                    window.CollabState = 3;
+                    window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
+                    window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
+                }
+                break;
+            case 2: // setid sent, waiting on response.
+                if ( receivedObject.msgtype === "id_ok" ) {
+                    window.CollabState = 3;
+                    window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
+                    window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
+                    window.collabReady = true;
+                } else if ( receivedObject.msgtype === "setid" ) {
+                    setSetting ( "collabId", receivedObject.collabid );
+                    window.CollabState = 3;
+                    window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
+                    window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
+                    window.collabReady = true;
+                }
+                break;
+            case 3: // After collabId has been verified. "Anything goes" now...
+                if ( receivedObject.msgtype === "setting-change" ) {
+                    setSettingRemotely( receivedObject.setting, receivedObject.value );
+                    if ( receivedObject.setting === "lowpassFilterFreq" ) {
+                        window.lowpassFilterNode.frequency.value = receivedObject.value;
+                    } else if ( receivedObject.setting === "highpassFilterFreq" ) {
+                        window.highpassFilterNode.frequency.value = receivedObject.value;
+                    } else if ( receivedObject.setting === "balance" ) {
+                        window.stereoPannerNode.pan.value = receivedObject.value;
+                    }
+                    updateGUI();
+                } else if ( receivedObject.msgtype === "preset-change" ) {
+                    changePresetAndUpdateGUI( receivedObject.preset );
+                } else if ( receivedObject.msgtype === "noteon" ) {
+                    turnNoteOn ( receivedObject.note, receivedObject.velocity, true );
+                } else if ( receivedObject.msgtype === "noteoff" ) {
+                    turnNoteOff( receivedObject.note, true );
+                } else if ( receivedObject.msgtype === "onward-latency-update" ) {
+                    window.latencyEstDelay = window.serverLatencyEst + receivedObject.latency;
+                } else if ( receivedObject.msgtype === "client-joined" ) {
+                    
+                } else if ( receivedObject.msgtype === "chat" ) {
+                    
+                } else {
+                    // unknown message type.
+                }
+                
+                break;
+        }
+        
+    };
+}
+
+function sendMessageToServer ( messageObject ) {
+    console.log( messageObject );
+    var JSONifiedMessage = JSON.stringify( messageObject );
+    window.CollabSocket.send( JSONifiedMessage );
+}
+
+function updateGUI() {
+    $('#master-volume-knob')
+        .val(window.masterVolSetting)
+        .trigger('change');
+    $('#volume-knob-LFO')
+        .val(window.volSettingLFO)
+        .trigger('change');            
+    $('#volume-knob-1')
+        .val(window.volSetting1)
+        .trigger('change');
+    $('#volume-knob-2')
+        .val(window.volSetting2)
+        .trigger('change');
+    $('#volume-knob-3')
+        .val(window.volSetting3)
+        .trigger('change'); 
+    $('#freq-knob-lfo')
+        .val(window.freqSettingLFO)
+        .trigger('change');
+    $('#freq-knob-lowpass')
+        .val(window.lowpassFilterFreq)
+        .trigger('change');
+    $('#freq-knob-highpass')
+        .val(window.highpassFilterFreq)
+        .trigger('change');
+
+    setSlidersandDropdowns();
+    
+    $('#waveformSelectLFO').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSettingLFO ) });
+    $('#waveformSelect1').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting1 ) });
+    $('#waveformSelect2').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting2 ) });
+    $('#waveformSelect3').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting3 ) });
 }
