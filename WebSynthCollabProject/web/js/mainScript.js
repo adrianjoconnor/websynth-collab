@@ -19,32 +19,32 @@ window.masterVolSetting = 25;
 window.volSetting1 = 35;
 window.freqSetting1 = 440;
 window.waveformSetting1 = 'sine';
-window.AttackSetting1 = 0;
-window.DecaySetting1 = 100;
+window.AttackSetting1 = 1; // Attack value is in seconds.
+window.DecaySetting1 = 0.1; // Decay value is in seconds.
 window.SustainSetting1 = 0.8;
-window.ReleaseSetting1 = 10;
+window.ReleaseSetting1 = 1; // Release value is in seconds.
 window.OctaveMultiplierValue1 = 1;
-window.SemitoneOffsetValue1 = 1;
+window.SemitoneOffsetValue1 = 0;
 
 window.volSetting2 = 35;
 window.freqSetting2 = 220;
 window.waveformSetting2 = 'square';
-window.AttackSetting2 = 0;
-window.DecaySetting2 = 100;
+window.AttackSetting2 = 1;
+window.DecaySetting2 = 0.1;
 window.SustainSetting2 = 0.8;
-window.ReleaseSetting2 = 10;
+window.ReleaseSetting2 = 1;
 window.OctaveMultiplierValue2 = 1;
-window.SemitoneOffsetValue2 = 1;
+window.SemitoneOffsetValue2 = 0;
 
 window.volSetting3 = 20;
 window.freqSetting3 = 660;
 window.waveformSetting3 = 'sawtooth';
-window.AttackSetting3 = 0;
-window.DecaySetting3 = 100;
+window.AttackSetting3 = 1;
+window.DecaySetting3 = 0.1;
 window.SustainSetting3 = 0.8;
-window.ReleaseSetting3 = 10;
+window.ReleaseSetting3 = 1;
 window.OctaveMultiplierValue3 = 1;
-window.SemitoneOffsetValue3 = 1;
+window.SemitoneOffsetValue3 = 0;
 
 window.LFOvol = 50;
 window.LFOfreq = 1;
@@ -89,15 +89,15 @@ Osc.prototype.setUpEnvelope = function () {
     var currentTime = webAudioContext.currentTime;
     
     this.envelopeNode.gain.setValueAtTime( 0, currentTime );
-    this.envelopeNode.gain.linearRampToValueAtTime( 1, currentTime + this.attack );
+    this.envelopeNode.gain.linearRampToValueAtTime( 1, currentTime + this.attack ); // Attack is in seconds.
     this.envelopeNode.gain.exponentialRampToValueAtTime( this.sustain, currentTime + this.attack + this.decay );
 };
 
 // To be called when note is released.
 Osc.prototype.releaseNow = function () {
     var currentTime = webAudioContext.currentTime;
-    
     this.envelopeNode.gain.exponentialRampToValueAtTime( 0.0001, currentTime + this.release );
+    // Release value is in seconds.
 };
 
 Osc.prototype.changeVolume = function ( newVol ) {
@@ -200,7 +200,7 @@ function Synth () {
     this.osc1 = new Osc( window.freqSetting1, window.volSetting1, window.waveformSetting1, window.AttackSetting1, window.DecaySetting1, window.SustainSetting1, window.ReleaseSetting1, window.OctaveMultiplierValue1, SemitoneOffsetValue1 );
     this.osc2 = new Osc( window.freqSetting2, window.volSetting2, window.waveformSetting2, window.AttackSetting2, window.DecaySetting2, window.SustainSetting2, window.ReleaseSetting2, window.OctaveMultiplierValue2, SemitoneOffsetValue2 );
     this.osc3 = new Osc( window.freqSetting3, window.volSetting3, window.waveformSetting3, window.AttackSetting3, window.DecaySetting3, window.SustainSetting3, window.ReleaseSetting3, window.OctaveMultiplierValue3, SemitoneOffsetValue3 );
-    this.LFO = new LFO( window.LFOfreq, window.LFOvol, window.LFOwaveform, window.LFOattack, window.LFOdecay, window.LFOsustain, window.LFOrelease );
+    this.LFO = new Osc( window.LFOfreq, window.LFOvol, window.LFOwaveform, window.LFOattack, window.LFOdecay, window.LFOsustain, window.LFOrelease, 1, 0 );
     
     this.midiGainNode = webAudioContext.createGain();
     this.masterVolumeNode = webAudioContext.createGain();
@@ -228,6 +228,10 @@ Synth.prototype.changeMidiVolume = function ( newVol ) {
 };
 
 Synth.prototype.start = function () {
+    this.osc1.setUpEnvelope();
+    this.osc2.setUpEnvelope();
+    this.osc3.setUpEnvelope();
+
     this.osc1.oscillator.start();
     this.osc2.oscillator.start();
     this.osc3.oscillator.start();
@@ -265,10 +269,14 @@ Synth.prototype.setupReleaseCallback = function ( synthNum ) {
         maxRelease = this.LFO.release;
     }
     
+    // Use 129 for release phase.
+    window.synthStates[synthNum] = 129;
+    
+    
     setTimeout( function(){ 
         window.synths[synthNum].stop();
         window.synthStates[synthNum] = 128;
-    }, maxRelease + 20 );
+    }, ( maxRelease * 1000 ) + 20 );
     
 };
 
@@ -435,11 +443,11 @@ function processMidiInput ( midiMessage ) {
             if ( window.synthStates[curSynth] == 128 ) {
                 window.synthStates[curSynth] = note;
                 window.synths[curSynth] = new Synth();
-                window.synths[curSynth].changeMidiVolume( (velocity / 128) );
+                window.synths[curSynth].changeMidiVolume( (velocity / 128) ); // Gain is between 0 and 1.
                 window.synths[curSynth].changeMasterVolume( window.masterVolSetting )
                 
                 // Frequency of musical note from a midi note is (note A4 freq) * 2 ^ ( (note-69) / 12 ) 
-                // ^ above denotes to the power of.
+                // ^ symbol above denotes to the power of.
                 // See https://en.wikipedia.org/wiki/MIDI_Tuning_Standard for info
                 // Semitone offset and octave multiplier must also be taken into account.
                 

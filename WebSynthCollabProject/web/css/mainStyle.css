@@ -1,1 +1,15 @@
- 
+.osc-controls {
+    border: 2px dashed black;
+    margin: 1em;
+    padding: 0.5em;
+}
+
+.osc-controls canvas {
+    
+}
+
+@media screen and (min-width: 769px) {
+    .osc-controls {
+        
+    }
+}  
