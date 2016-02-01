@@ -220,4 +220,4 @@ if __name__ == "__main__":
         #start new thread takes 1st argument as a function name to be run, second is the tuple of arguments to the function.
         thread.start_new_thread( clientThread ,(connection, currentClientID ) )
         
-        server_socket.close()
+    server_socket.close()
