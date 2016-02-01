@@ -108,7 +108,27 @@ if __name__ == "__main__":
     
     print "Collab server started on port " + str(PORT)
     
-    def send_message( connection, message ):
+    def receiveMessage( connection ):
+        data = connection.recv(RECV_BUFFER)
+    
+        length = ord(data[1]) & 127
+        masks = [ord(byte) for byte in data[2:6]]
+        endChar = 6
+        print "length:" + str(length)
+        if length == 126:
+            length = struct.unpack(">H", data[2:4])[0]
+            masks = [ord(byte) for byte in data[4:8]]
+            endChar = 8
+        elif length == 127:
+            length = struct.unpack(">Q", data[2:10])[0]
+            masks = [ord(byte) for byte in data[10:14]]
+            endChar = 14
+        decoded = ""
+        for char in data[endChar:endChar+length]:
+            decoded += chr(ord(char) ^ masks[len(decoded) % 4])
+        return decoded
+    
+    def sendMessage( connection, message ):
         connection.send(chr(129))
         length = len(message)
         if length <= 125:
@@ -142,11 +162,13 @@ if __name__ == "__main__":
         response += 'Sec-WebSocket-Accept: %s\r\n\r\n' % digest
         connection.send(response)
         
-        print "handshake apparently done."
+        print "handshake done."
         
-        send_message ( connection, '{"msgtype": "id"}' )
+        sendMessage ( connection, '{"msgtype":"id"}' )
         
+        data = receiveMessage( connection )
         
+        print "response from client: " + data
         
         """connection.send( '{"msgtype": "id"}' )
         
