@@ -6,6 +6,8 @@ var sampleArrayLength = 2048; // Buffer size
 
 var rangeFactor = Math.pow ( 2, bitDepth - 1 );
 
+///////////////////////////////////////////////////////
+
 var webAudioContext = new AudioContext();
 
 var noteA4Frequency = 440;
@@ -13,6 +15,7 @@ var noteA4Frequency = 440;
 window.numSynths = 10;
 
 window.masterVolSetting = 25;
+
 window.volSetting1 = 35;
 window.freqSetting1 = 440;
 window.waveformSetting1 = 'sine';
@@ -43,14 +46,13 @@ window.ReleaseSetting3 = 10;
 window.OctaveMultiplierValue3 = 1;
 window.SemitoneOffsetValue3 = 1;
 
-window.LFOvol = 5;
+window.LFOvol = 50;
 window.LFOfreq = 1;
 window.LFOwaveform = 'sine';
 window.LFOattack = 0;
 window.LFOdecay = 100;
 window.LFOsustain = 0.8;
 window.LFOrelease = 10;
-
 
 
 function Osc ( freq, vol, waveform, attack, decay, sustain, release, octaveMultiplier, semitoneOffset ) {
@@ -68,47 +70,67 @@ function Osc ( freq, vol, waveform, attack, decay, sustain, release, octaveMulti
     
     this.envelopeNode = webAudioContext.createGain();
     
+    
+    
     this.octaveMultiplier = octaveMultiplier;
     this.semitoneOffset = semitoneOffset;
 }
 
+Osc.prototype.connect = function () {
+    this.oscillator.connect( this.envelopeNode );
+    this.envelopeNode.connect( this.volumeNode );
+};
+
 Osc.prototype.changeFrequency = function ( newFreq ) {
     this.oscillator.frequency.value = newFreq;
-}
+};
+
+Osc.prototype.setUpEnvelope = function () {
+    var currentTime = webAudioContext.currentTime;
+    
+    this.envelopeNode.gain.setValueAtTime( 0, currentTime );
+    this.envelopeNode.gain.linearRampToValueAtTime( 1, currentTime + this.attack );
+    this.envelopeNode.gain.exponentialRampToValueAtTime( this.sustain, currentTime + this.attack + this.decay );
+};
+
+// To be called when note is released.
+Osc.prototype.releaseNow = function () {
+    var currentTime = webAudioContext.currentTime;
+    
+    this.envelopeNode.gain.exponentialRampToValueAtTime( 0.0001, currentTime + this.release );
+};
 
 Osc.prototype.changeVolume = function ( newVol ) {
     this.volumeNode.gain.value = newVol;
-}
+};
 
 Osc.prototype.changeWaveform = function ( newType ) {
     this.oscillator.type = newFreq;
-}
+};
 
 Osc.prototype.changeAttack = function ( newAttack ) {
     this.attack = newAttack;
-}
+};
 
 Osc.prototype.changeDecay = function ( newDecay ) {
     this.decay = newDecay;
-}
+};
 
 Osc.prototype.changeSustain = function ( newSustain ) {
     this.sustain = newSustain;
-}
+};
 
 Osc.prototype.changeRelease = function ( newRelease ) {
     this.release = newRelease;
-}
-
+};
 
 Osc.prototype.changeOctaveMultiplier = function ( newVal ) {
     this.octaveMultiplier = newVal;
-}
+};
 
 Osc.prototype.changeSemitoneOffset = function ( newVal ) {
     this.semitoneOffset = newVal;
-}
-
+};
 
 function LFO ( freq, vol, waveform, attack, decay, sustain, release ) {
     this.oscillator = webAudioContext.createOscillator();
@@ -126,33 +148,53 @@ function LFO ( freq, vol, waveform, attack, decay, sustain, release ) {
     this.envelopeNode = webAudioContext.createGain();
 }
 
+LFO.prototype.connect = function () {
+    this.oscillator.connect( this.envelopeNode );
+    this.envelopeNode.connect( this.volumeNode );
+}
+
 LFO.prototype.changeFrequency = function ( newFreq ) {
     this.oscillator.frequency.value = newFreq;
-}
+};
 
 LFO.prototype.changeVolume = function ( newVol ) {
     this.volumeNode.gain.value = newVol;
-}
+};
 
 LFO.prototype.changeWaveform = function ( newType ) {
     this.oscillator.type = newFreq;
-}
+};
 
 LFO.prototype.changeAttack = function ( newAttack ) {
     this.attack = newAttack;
-}
+};
 
 LFO.prototype.changeDecay = function ( newDecay ) {
     this.decay = newDecay;
-}
+};
 
 LFO.prototype.changeSustain = function ( newSustain ) {
     this.sustain = newSustain;
-}
+};
 
 LFO.prototype.changeRelease = function ( newRelease ) {
     this.release = newRelease;
-}
+};
+
+LFO.prototype.setUpEnvelope = function () {
+    var currentTime = webAudioContext.currentTime;
+    
+    this.envelopeNode.gain.setValueAtTime( 0, currentTime );
+    this.envelopeNode.gain.linearRampToValueAtTime( 1, currentTime + this.attack );
+    this.envelopeNode.gain.exponentialRampToValueAtTime( this.sustain, currentTime + this.attack + this.decay );
+};
+
+// To be called when note is released.
+LFO.prototype.releaseNow = function () {
+    var currentTime = webAudioContext.currentTime;
+    
+    this.envelopeNode.gain.exponentialRampToValueAtTime( 0.0001, currentTime + this.release );
+};
 
 function Synth () {
     this.osc1 = new Osc( window.freqSetting1, window.volSetting1, window.waveformSetting1, window.AttackSetting1, window.DecaySetting1, window.SustainSetting1, window.ReleaseSetting1, window.OctaveMultiplierValue1, SemitoneOffsetValue1 );
@@ -162,15 +204,73 @@ function Synth () {
     
     this.midiGainNode = webAudioContext.createGain();
     this.masterVolumeNode = webAudioContext.createGain();
+    
+};
+
+Synth.prototype.connect = function () {
+    this.osc1.connect();
+    this.osc2.connect();
+    this.osc3.connect();
+    this.LFO.connect();
+
+    this.osc1.volumeNode.connect( this.midiGainNode );
+    this.osc2.volumeNode.connect( this.midiGainNode );
+    this.osc3.volumeNode.connect( this.midiGainNode );
+    this.LFO.volumeNode.connect( this.midiGainNode );
+    
+    this.midiGainNode.connect( this.masterVolumeNode );
+    
+    this.masterVolumeNode.connect( webAudioContext.destination );
 };
 
 Synth.prototype.changeMidiVolume = function ( newVol ) {
-    this.midiGainNode.gain.value = newVol;
-}
+    this.midiGainNode.gain.value = newVol / 100;
+};
+
+Synth.prototype.start = function () {
+    this.osc1.oscillator.start();
+    this.osc2.oscillator.start();
+    this.osc3.oscillator.start();
+};
+
+Synth.prototype.stop = function () {
+    this.osc1.oscillator.stop();
+    this.osc2.oscillator.stop();
+    this.osc3.oscillator.stop();
+};
 
 Synth.prototype.changeMasterVolume = function ( newVol ) {
     this.masterVolumeNode.gain.value = newVol;
-}
+};
+
+Synth.prototype.setupReleaseCallback = function ( synthNum ) {
+    
+    this.osc1.releaseNow();
+    this.osc2.releaseNow();
+    this.osc3.releaseNow();
+    this.LFO.releaseNow();
+    
+    var maxRelease = 0;
+    
+    if ( this.osc1.release > maxRelease ) {
+        maxRelease = this.osc1.release;
+    }
+    if ( this.osc2.release > maxRelease ) {
+        maxRelease = this.osc2.release;
+    }
+    if ( this.osc3.release > maxRelease ) {
+        maxRelease = this.osc3.release;
+    }
+    if ( this.LFO.release > maxRelease ) {
+        maxRelease = this.LFO.release;
+    }
+    
+    setTimeout( function(){ 
+        window.synths[synthNum].stop();
+        window.synthStates[synthNum] = 128;
+    }, maxRelease + 20 );
+    
+};
 
 var playState = false;
 
@@ -197,10 +297,12 @@ $( document ).ready(function() {
 
     // Create multiple synths for chords.
 
-    var synths = [];
+    window.synths = [];
     
-    for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
-        synths[curSynth] = new Synth();
+    window.synthStates = [];
+    
+    for ( var synthStateNo = 0; synthStateNo < numSynths; synthStateNo++ ) {
+        window.synthStates[synthStateNo] = 128; // Use 128 for off. 0-127 denote note velocity.
     }
 
     $("#master-volume-knob").knob({
@@ -250,29 +352,29 @@ $( document ).ready(function() {
         .trigger('change');
                     
     $('#volume-knob-1')
-        .val(35)
+        .val(window.volSetting1)
         .trigger('change');
     
     $('#volume-knob-2')
-        .val(35)
+        .val(window.volSetting2)
+        .trigger('change');
+        
+    $('#volume-knob-3')
+        .val(window.volSetting3)
         .trigger('change');
     
     $('#frequency-knob-1')
-        .val(440)
+        .val(window.freqSetting1)
         .trigger('change');
     
     $('#frequency-knob-2')
-        .val(220)
+        .val(window.freqSetting2)
         .trigger('change');
         
     $('#frequency-knob-3')
-        .val(440)
+        .val(window.freqSetting3)
         .trigger('change');
     
-    $('#frequency-knob-3')
-        .val(220)
-        .trigger('change');
-        
 });
     
     
@@ -306,12 +408,55 @@ function accessGrantedToMIDI ( MIDIobject ) {
         
         midiKeyboardSelect.add( inputOptionTag );
     }
+    
+    switchMidiKeyboard ();
 }
 
 function processMidiInput ( midiMessage ) {
+
     var midiInfo = midiMessage.data;
     
-    
+    if ( midiInfo[0] == 128 || ( midiInfo[0] == 144 && midiInfo[2] == 0 ) ) { // Note off message
+        var note = midiInfo[1];
+        
+        for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+            if ( window.synthStates[curSynth] == note ) {
+                window.synths[curSynth].setupReleaseCallback( curSynth );
+                
+                break;
+            }
+        }
+        
+    } else if ( midiInfo[0] == 144 ) { // Note on message                        
+        var note = midiInfo[1];
+        var velocity = midiInfo[2];
+        
+        for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+            if ( window.synthStates[curSynth] == 128 ) {
+                window.synthStates[curSynth] = note;
+                window.synths[curSynth] = new Synth();
+                window.synths[curSynth].changeMidiVolume( (velocity / 128) );
+                window.synths[curSynth].changeMasterVolume( window.masterVolSetting )
+                
+                // Frequency of musical note from a midi note is (note A4 freq) * 2 ^ ( (note-69) / 12 ) 
+                // ^ above denotes to the power of.
+                // See https://en.wikipedia.org/wiki/MIDI_Tuning_Standard for info
+                // Semitone offset and octave multiplier must also be taken into account.
+                
+                window.synths[curSynth].osc1.changeFrequency (
+                    window.noteA4Frequency * Math.pow( 2, ( ( note - 69 + ( ( window.synths[curSynth].osc1.octaveMultiplier - 1 ) * 12 ) + window.synths[curSynth].osc1.semitoneOffset ) / 12 ) )    );
+                window.synths[curSynth].osc2.changeFrequency (
+                    window.noteA4Frequency * Math.pow( 2, ( ( note - 69 + ( ( window.synths[curSynth].osc2.octaveMultiplier - 1 ) * 12 ) + window.synths[curSynth].osc2.semitoneOffset ) / 12 ) )    );
+                window.synths[curSynth].osc3.changeFrequency (
+                    window.noteA4Frequency * Math.pow( 2, ( ( note - 69 + ( ( window.synths[curSynth].osc3.octaveMultiplier - 1 ) * 12 ) + window.synths[curSynth].osc3.semitoneOffset ) / 12 ) )    );
+                
+                window.synths[curSynth].connect();
+                window.synths[curSynth].start();
+                
+                break;
+            }
+        }
+    }
     
 }
 
@@ -362,14 +507,11 @@ function playSound () {
 }
 
 function playSine( freq1, freq2, freq3, vol1, vol2, vol3, masterVolume ) {
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
-    
     
     osc1.type = 'sine';
     osc1.frequency.value = freq1;
     
-    osc2.type = 'square';.0
+    osc2.type = 'square';
    
     osc2.frequency.value = freq2;
     
@@ -430,12 +572,12 @@ function FreqTextChange2() {
 }
 
 function reviseMasterVolume ( vol ) {
-    window.masterVolSetting = vol / 100;
+    window.masterVolSetting = vol;
     volumeNode.gain.value = vol / 100;
 }
 
 function reviseVolume1 ( vol ) {
-    window.volSetting1 = vol / 100;
+    window.volSetting1 = vol;
     osc1VolNode.gain.value = vol / 100;
 }
 
@@ -445,7 +587,7 @@ function reviseFreq1 ( freq ) {
 }
 
 function reviseVolume2 ( vol ) {
-    window.volSetting2 = vol / 100;
+    window.volSetting2 = vol;
     osc2VolNode.gain.value = vol / 100;
 }
 
@@ -455,7 +597,7 @@ function reviseFreq2 ( freq ) {
 }
 
 function reviseVolume3 ( vol ) {
-    window.volSetting3 = vol / 100;
+    window.volSetting3 = vol;
     osc3VolNode.gain.value = vol / 100;
 }
 
