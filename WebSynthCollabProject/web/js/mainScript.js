@@ -1,14 +1,21 @@
 // for mixdowns.
-var sampleRate = 44100;
 var bitDepth = 16;
 var maxAmp = Math.pow ( 2, ( bitDepth - 1 ) ) - 1;
 var sampleArrayLength = 2048; // Buffer size
-
+var maxAmp = Math.pow ( 2, ( bitDepth - 1 ) ) - 1;
 var rangeFactor = Math.pow ( 2, bitDepth - 1 );
+
+// for recording
+
+var recordingBuffersize = 1024;
+var inputChannels = 2;
+var outputChannels = 2;
 
 ///////////////////////////////////////////////////////
 
 var webAudioContext = new AudioContext();
+
+window.exitNode = webAudioContext.createGain();
 
 window.noteA4Frequency = 440; // value in hz
 window.numSynths = 90;
@@ -198,7 +205,7 @@ Synth.prototype.connect = function () {
     
     this.midiGainNode.connect( this.masterVolumeNode );
     
-    this.masterVolumeNode.connect( webAudioContext.destination );
+    this.masterVolumeNode.connect( window.exitNode );
 };
 
 Synth.prototype.changeMidiVolume = function ( newVol ) {
@@ -287,6 +294,9 @@ $( document ).ready(function() {
         var note = parseInt(e.detail.index) + 36 + ( parseInt(window.onScreenKeyboardOctave) * 12 );
         turnNoteOff ( note );
     });
+    
+    window.exitNode.gain.value = 1;
+    window.exitNode.connect( webAudioContext.destination );
 
     // Create multiple synths for chords.
     
@@ -1284,4 +1294,67 @@ function updateReleaseSliderLFO ( ) {
     }
     
     reviseReleaseLFO( releaseDisplayLFO.value );
+}
+
+function startRecording() {
+    window.recordingBuffer = new Array();
+    window.recordingNode = webAudioContext.createScriptProcessor( window.recordingBuffersize, window.inputChannels, window.outputChannels );
+    window.recordingNode.onaudioprocess = function(audioProcessingEvent) {
+        var inputBuffer = audioProcessingEvent.inputBuffer;
+        audioProcessingEvent.outputBuffer = inputBuffer;
+        var leftChan = inputBuffer.getChannelData(0);
+        var rightChan = inputBuffer.getChannelData(1);
+        
+        var outputLeftChan = audioProcessingEvent.outputBuffer.getChannelData(0);
+        var outputRightChan = audioProcessingEvent.outputBuffer.getChannelData(1);
+        
+        /*
+        for ( var curSampleL = 0; curSampleL < leftChan.length; curSampleL++ ) {
+            outputLeftChan = 0;
+            recordingBuffer.push( leftChan[curSampleL] );
+        }
+        for ( var curSampleR = 0; curSampleR < rightChan.length; curSampleR++ ) {
+            outputRightChan = 0;
+            recordingBuffer.push( rightChan[curSampleR] );
+        }
+        */
+        
+        for ( var curSample = 0; curSample < leftChan.length; curSample++ ) {
+            outputLeftChan = 0;
+            outputRightChan = 0;
+            window.recordingBuffer.push( leftChan[curSample] );
+            window.recordingBuffer.push( rightChan[curSample] );
+        }
+    }
+    window.exitNode.connect( window.recordingNode );
+    window.recordingNode.connect( webAudioContext.destination );
+}
+
+function stopRecording() {
+    window.exitNode.disconnect( window.recordingNode );
+    window.recordingNode.disconnect( webAudioContext.destination );
+    
+    ////////////////
+    
+    window.data = [];
+    for ( var curSample = 0; curSample < window.recordingBuffer.length; curSample++ ) {
+        window.data[curSample] = window.recordingBuffer[curSample] * maxAmp ;
+    }
+    
+    var wave = new RIFFWAVE(); // create the wave file
+    wave.header.sampleRate = webAudioContext.sampleRate;
+    wave.header.numChannels = 2;
+    wave.header.bitsPerSample = bitDepth;
+    //
+    wave.Make( window.data );
+    
+    var link = document.createElement("a");
+    var date = new Date();
+    link.download = "synth-recording-" + date.getDate() + "-" + date.getMonth() + "-" + date.getFullYear() + " " + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds() + "-" + date.getMilliseconds() + ".wav";
+    link.href = wave.dataURI;
+    link.click();
+    
+    var audio = new Audio(); // create the HTML5 audio element
+    audio.src = wave.dataURI;
+    audio.play();
 }

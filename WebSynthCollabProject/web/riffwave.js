@@ -106,7 +106,7 @@ var RIFFWAVE = function(data) {
         this.header.byteRate = this.header.blockAlign * this.header.sampleRate;
         this.header.subChunk2Size = this.data.length * (this.header.bitsPerSample >> 3);
         this.header.chunkSize = 36 + this.header.subChunk2Size;
-
+        
         this.wav = this.header.chunkId.concat(
             u32ToArray(this.header.chunkSize),
             this.header.format,
@@ -128,5 +128,3 @@ var RIFFWAVE = function(data) {
     if (data instanceof Array) this.Make(data);
 
 }; // end RIFFWAVE
-
-
