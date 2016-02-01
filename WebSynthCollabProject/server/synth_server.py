@@ -1,13 +1,16 @@
 # Socket server in python using select functi
-import sys, socket, select, os, MySQLdb, json, time, thread
-  
+import sys, socket, select, os, MySQLdb, json, time, thread, struct
+from base64 import b64encode
+from hashlib import sha1
+from mimetools import Message
+from StringIO import StringIO
+
 if __name__ == "__main__":
     # config file is passed as the first command line parameter.
     RECV_BUFFER = 2048 # power of 2
     PORT = 6520
     
     currentClientID = 1
-    serverSocket = None
     
     def loadDbParams ():
         "Sets database parameters from config file"
@@ -54,7 +57,6 @@ if __name__ == "__main__":
     server_socket.listen(5)
     
     Clients = []
-    
     
     class ConnectedClient(object):
         clientID = 0
@@ -109,9 +111,34 @@ if __name__ == "__main__":
     def clientThread ( connection, clientID ):
         #Sending message to connected client
         preSendTime = lambda: int( round( time.time() * 1000 ) )
-        connection.send( '{"msgtype": "id"}' )
+        
+        # deal with websocket handshake here
+        
+        magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+        
+        data = connection.recv(1024).strip()
+        headers = Message(StringIO(data.split('\r\n', 1)[1]))
+        if headers.get("Upgrade", None) != "websocket":
+            return
+        print 'Handshaking...'
+        key = headers['Sec-WebSocket-Key']
+        digest = b64encode(sha1(key + magic).hexdigest().decode('hex'))
+        response = 'HTTP/1.1 101 Switching Protocols\r\n'
+        response += 'Upgrade: websocket\r\n'
+        response += 'Connection: Upgrade\r\n'
+        response += 'Sec-WebSocket-Accept: %s\r\n\r\n' % digest
+        connection.send(response)
+        
+        print "handshake apparently done."
+        
+        """connection.send( '{"msgtype": "id"}' )
+        
+        print "tried sending id request json"
+        
         data = connection.recv(RECV_BUFFER)
-        print "data: " + data
+        
+        print "tried receiving from client"
+        
         receivedMessage = json.loads( data )
         postSendTime = lambda: int( round( time.time() * 1000 ) )
         latencyEst = ( postSendTime - preSendTime ) / 2
@@ -180,7 +207,7 @@ if __name__ == "__main__":
         
         connection.close()
         
-        
+        """
         
     
     while True:
