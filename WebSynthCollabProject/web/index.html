@@ -1,0 +1,16 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <script src="riffwave.js"></script>
+        <script src="js/jquery-2.1.4.min.js" ></script>
+        <script src="js/jquery.knob.js"></script>
+        <link rel="stylesheet" href="css/mainStyle.css" />
+        <script src="js/mainScript.js"></script>
+    </head>
+    <body>
+        <label for="frequency">Osc1 Frequency (Hz)&colon;</label></label><input class="knob" onchange="FreqTextChange()" id="frequency-knob" value="440" data-width="125" data-displayprevious="true" data-fgcolor="#ffec03" data-skin="tron" data-cursor="true" data-thickness=".2" style="width: 41px; height: 25px; position: absolute; vertical-align: middle; margin-top: 25px; margin-left: -58px; border: 0px; font-weight: bold; font-style: normal; font-variant: normal; font-stretch: normal; font-size: 15px; line-height: normal; font-family: Arial; text-align: center; color: rgb(255, 236, 3); padding: 0px; -webkit-appearance: none; background: none;" />
+        <button id="playButton" onClick="playSound()">Play</button>
+        <label for="midiKeyboard">Select MIDI Keyboard: </label></label><select id="midiKeyboard" onchange="switchMidiKeyboard()"></select>
+        <input id="volume-knob" onchange="VolumeTextChange()" class="knob" data-width="125" data-displayprevious="true" data-fgcolor="#ffec03" data-skin="tron" data-cursor="true" value="75" data-thickness=".2" style="width: 41px; height: 25px; position: absolute; vertical-align: middle; margin-top: 25px; margin-left: -58px; border: 0px; font-weight: bold; font-style: normal; font-variant: normal; font-stretch: normal; font-size: 15px; line-height: normal; font-family: Arial; text-align: center; color: rgb(255, 236, 3); padding: 0px; -webkit-appearance: none; background: none;">
+   </body>
+</html> 
