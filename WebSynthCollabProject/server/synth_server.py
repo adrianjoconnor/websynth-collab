@@ -108,6 +108,19 @@ if __name__ == "__main__":
     
     print "Collab server started on port " + str(PORT)
     
+    def send_message( connection, message ):
+        connection.send(chr(129))
+        length = len(message)
+        if length <= 125:
+            connection.send(chr(length))
+        elif length >= 126 and length <= 65535:
+            connection.send(126)
+            connection.send(struct.pack(">H", length))
+        else:
+            connection.send(127)
+            connection.send(struct.pack(">Q", length))
+        connection.send(message)
+    
     def clientThread ( connection, clientID ):
         #Sending message to connected client
         preSendTime = lambda: int( round( time.time() * 1000 ) )
@@ -130,6 +143,10 @@ if __name__ == "__main__":
         connection.send(response)
         
         print "handshake apparently done."
+        
+        send_message ( connection, '{"msgtype": "id"}' )
+        
+        
         
         """connection.send( '{"msgtype": "id"}' )
         
