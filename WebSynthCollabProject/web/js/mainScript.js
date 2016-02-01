@@ -10,7 +10,7 @@ var rangeFactor = Math.pow ( 2, bitDepth - 1 );
 
 var webAudioContext = new AudioContext();
 
-var noteA4Frequency = 440; // value in hz
+window.noteA4Frequency = 440; // value in hz
 window.numSynths = 90;
 window.masterVolSetting = 35;
 window.onScreenKeyboardOctave = 0;
@@ -55,7 +55,7 @@ window.waveformSetting1 = 'sine';
 window.AttackSetting1 = 0.04; // Attack value is in seconds.
 window.DecaySetting1 = 0.35; // Decay value is in seconds.
 window.SustainSetting1 = 0.8;
-window.ReleaseSetting1 = 0.64; // Release value is in seconds.
+window.ReleaseSetting1 = 0.67724; // Release value is in seconds.
 window.OctaveMultiplierValue1 = 0;
 window.SemitoneOffsetValue1 = 0;
 
@@ -65,7 +65,7 @@ window.waveformSetting2 = 'square';
 window.AttackSetting2 = 0.04;
 window.DecaySetting2 = 0.35;
 window.SustainSetting2 = 0.8;
-window.ReleaseSetting2 = 0.64;
+window.ReleaseSetting2 = 0.67724;
 window.OctaveMultiplierValue2 = 0;
 window.SemitoneOffsetValue2 = 0;
 
@@ -75,17 +75,17 @@ window.waveformSetting3 = 'sawtooth';
 window.AttackSetting3 = 0.04;
 window.DecaySetting3 = 0.35;
 window.SustainSetting3 = 0.8;
-window.ReleaseSetting3 = 0.64;
+window.ReleaseSetting3 = 0.67724;
 window.OctaveMultiplierValue3 = 0;
 window.SemitoneOffsetValue3 = 0;
 
-window.LFOvol = 50;
+window.LFOvol = 0;
 window.LFOfreq = 1;
 window.LFOwaveform = 'sine';
 window.LFOattack = 0.04;
 window.LFOdecay = 0.35;
 window.LFOsustain = 0.8;
-window.LFOrelease = 0.64;
+window.LFOrelease = 0.67724;
 
 function mobilecheck ( ) {
   var check = false;
@@ -171,60 +171,8 @@ Osc.prototype.changeSemitoneOffset = function ( newVal ) {
 // An LFO is an oscillator set to a very low (usually subsonic) frequency.
 // It has no octave or semitone offset since it has a fixed frequency.
 function makeLFO ( freq, vol, waveform, attack, decay, sustain, release ) {
-    return new Osc ( freq, vol, waveform, attack, decay, sustain, release, 1, 0 );
+    return new Osc ( freq, vol, waveform, attack, decay, sustain, release, 0, 0 );
 }
-
-/*
-
-LFO.prototype.connect = function () {
-    this.oscillator.connect( this.envelopeNode );
-    this.envelopeNode.connect( this.volumeNode );
-}
-
-LFO.prototype.changeFrequency = function ( newFreq ) {
-    this.oscillator.frequency.value = newFreq;
-};
-
-LFO.prototype.changeVolume = function ( newVol ) {
-    this.volumeNode.gain.value = newVol;
-};
-
-LFO.prototype.changeWaveform = function ( newType ) {
-    this.oscillator.type = newFreq;
-};
-
-LFO.prototype.changeAttack = function ( newAttack ) {
-    this.attack = newAttack;
-};
-
-LFO.prototype.changeDecay = function ( newDecay ) {
-    this.decay = newDecay;
-};
-
-LFO.prototype.changeSustain = function ( newSustain ) {
-    this.sustain = newSustain;
-};
-
-LFO.prototype.changeRelease = function ( newRelease ) {
-    this.release = newRelease;
-};
-
-LFO.prototype.setUpEnvelope = function () {
-    var currentTime = webAudioContext.currentTime;
-    
-    this.envelopeNode.gain.setValueAtTime( 0, currentTime );
-    this.envelopeNode.gain.linearRampToValueAtTime( 1, currentTime + this.attack );
-    this.envelopeNode.gain.exponentialRampToValueAtTime( this.sustain, currentTime + this.attack + this.decay );
-};
-
-// To be called when note is released.
-LFO.prototype.releaseNow = function () {
-    var currentTime = webAudioContext.currentTime;
-    
-    this.envelopeNode.gain.exponentialRampToValueAtTime( 0.0001, currentTime + this.release );
-};
-        
-*/
 
 function Synth () {
     this.osc1 = new Osc( window.freqSetting1, window.volSetting1, window.waveformSetting1, window.AttackSetting1, window.DecaySetting1, window.SustainSetting1, window.ReleaseSetting1, window.OctaveMultiplierValue1, SemitoneOffsetValue1 );
@@ -261,16 +209,19 @@ Synth.prototype.start = function () {
     this.osc1.setUpEnvelope();
     this.osc2.setUpEnvelope();
     this.osc3.setUpEnvelope();
+    this.LFO.setUpEnvelope();
 
     this.osc1.oscillator.start();
     this.osc2.oscillator.start();
     this.osc3.oscillator.start();
+    this.LFO.oscillator.start();
 };
 
 Synth.prototype.stop = function () {
     this.osc1.oscillator.stop();
     this.osc2.oscillator.stop();
     this.osc3.oscillator.stop();
+    this.LFO.oscillator.stop();
 };
 
 Synth.prototype.changeMasterVolume = function ( newVol ) {
@@ -310,26 +261,7 @@ Synth.prototype.setupReleaseCallback = function ( synthNum ) {
     
 };
 
-var playState = false;
-
 var volumeNode = webAudioContext.createGain();
-
-var source;
-
-var osc1;
-var osc2;
-var osc3;
-osc1 = webAudioContext.createOscillator();
-osc2 = webAudioContext.createOscillator();
-osc3 = webAudioContext.createOscillator();
-
-var osc1VolNode = webAudioContext.createGain();
-var osc2VolNode = webAudioContext.createGain();
-var osc3VolNode = webAudioContext.createGain();
-
-osc1VolNode.gain.value = volSetting1 / 100;
-osc2VolNode.gain.value = volSetting2 / 100;
-osc3VolNode.gain.value = volSetting3 / 100;
 
 $( document ).ready(function() {
 
@@ -376,19 +308,19 @@ $( document ).ready(function() {
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
+    
+    $("#volume-knob-lfo").knob({
+                        'min':0,
+                        'max':100,
+                        'change' : function ( val ) { reviseVolumeLFO( val ) },
+                        'width' : oscKnobWidth,
+                        'thickness' : oscKnobThickness,
+                    });
 
     $("#volume-knob-1").knob({
                         'min':0,
                         'max':100,
                         'change' : function ( val ) { reviseVolume1( val ) },
-                        'width' : oscKnobWidth,
-                        'thickness' : oscKnobThickness,
-                    });
-                    
-    $("#frequency-knob-1").knob({
-                        'min':0,
-                        'max':20000,
-                        'change' : function ( val ) { reviseFreq1( val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
@@ -401,14 +333,6 @@ $( document ).ready(function() {
                         'thickness' : oscKnobThickness,
                     });
                     
-    $("#frequency-knob-2").knob({
-                        'min':0,
-                        'max':20000,
-                        'change' : function ( val ) { reviseFreq2( val ) },
-                        'width' : oscKnobWidth,
-                        'thickness' : oscKnobThickness,
-                    });
-                    
     $("#volume-knob-3").knob({
                         'min':0,
                         'max':100,
@@ -417,16 +341,20 @@ $( document ).ready(function() {
                         'thickness' : oscKnobThickness,
                     });
                     
-    $("#frequency-knob-3").knob({
+    $("#freq-knob-lfo").knob({
                         'min':0,
-                        'max':20000,
-                        'change' : function ( val ) { reviseFreq3( val ) },
+                        'max':32,
+                        'change' : function ( val ) { reviseFreqLFO( val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
                     });
     
     $('#master-volume-knob')
         .val(35)
+        .trigger('change');
+        
+    $('#volume-knob-lfo')
+        .val(window.LFOvol)
         .trigger('change');
                     
     $('#volume-knob-1')
@@ -440,18 +368,20 @@ $( document ).ready(function() {
     $('#volume-knob-3')
         .val(window.volSetting3)
         .trigger('change');
-    
-    $('#frequency-knob-1')
-        .val(window.freqSetting1)
-        .trigger('change');
-    
-    $('#frequency-knob-2')
-        .val(window.freqSetting2)
-        .trigger('change');
         
-    $('#frequency-knob-3')
-        .val(window.freqSetting3)
+    $('#freq-knob-lfo')
+        .val(window.LFOfreq)
         .trigger('change');
+    
+    $('#waveformSelectLFO').empty();
+    
+    $('#waveformSelectLFO').ddslick({
+        data: oscillatorSelectData,
+        defaultSelectedIndex:0,
+        onSelected: function(data){
+            reviseWaveformLFO( data.selectedData.value );
+        }
+    });
     
     $('#waveformSelect1').empty();
     
@@ -613,51 +543,10 @@ if (! window.AudioContext) {
     window.AudioContext = window.webkitAudioContext; // Some versions of Chrome need this.
 }
 
-function playSound () {    
-    if ( playState ) {
-        document.getElementById("playButton").innerHTML = "Play";
-        osc1.stop();
-        osc2.stop();
-        osc3.stop();
-        osc1 = webAudioContext.createOscillator();
-        osc2 = webAudioContext.createOscillator();
-        osc3 = webAudioContext.createOscillator();
-        playState = false;
-    } else {
-        document.getElementById("playButton").innerHTML = "Stop";
-        playSine( window.freqSetting1, window.freqSetting2, window.freqSetting3, window.volSetting1, window.volSetting2, window.volSetting3, window.masterVolSetting );
-        playState = true;
-    }
-}
-
-function playSine( freq1, freq2, freq3, vol1, vol2, vol3, masterVolume ) {
-    
-    osc1.type = 'sine';
-    osc1.frequency.value = freq1;
-    
-    osc2.type = 'square';
-   
-    osc2.frequency.value = freq2;
-    
-    osc3.type = 'sawtooth';
-    osc3.frequency.value = freq3;
-    
-    volumeNode.gain.value = 1;
-    
-    osc1.connect(osc1VolNode);
-    osc2.connect(osc2VolNode);
-    osc3.connect(osc3VolNode);
-    
-    osc1VolNode.connect(volumeNode);
-    osc2VolNode.connect(volumeNode);
-    osc3VolNode.connect(volumeNode);
-    
-    volumeNode.connect( webAudioContext.destination );
-    
-    osc1.start();
-    osc2.start();
-    osc3.start();
-    
+function changeA4Freq () {
+    var A4FreqSelect = document.getElementById("A4FreqSelect");
+    var newFreq = A4FreqSelect.options[A4FreqSelect.selectedIndex].value
+    window.noteA4Frequency = parseInt( newFreq );
 }
 
 function MasterVolumeTextChange () {
@@ -671,14 +560,25 @@ function changeOnScreenKeyboardOctaveSelect () {
     reviseOnScreenKeyboardOctave( newOctave );
 }
 
+function VolumeTextChangeLFO () {
+    var newVolSetting = document.getElementById("volume-knob-lfo").value;
+    reviseVolumeLFO( newVolSetting );
+}
+
+function FreqTextChangeLFO () {
+    var newFreqSetting = document.getElementById("freq-knob-lfo").value;
+    reviseFreqLFO( newFreqSetting );
+}
+
+function changeLFOWaveformSelect() {
+    var LFOWaveformSelect = document.getElementById("waveformSelectLFO");
+    var newType = LFOWaveformSelect.options[LFOWaveformSelect.selectedIndex].value;
+    reviseWaveformLFO( newType );
+}
+
 function VolumeTextChange1 () {
     var newVolSetting = document.getElementById("volume-knob-1").value;
     reviseVolume1( newVolSetting );
-}
-
-function FreqTextChange1() {
-    var newFreqSetting = document.getElementById("frequency-knob-1").value;
-    reviseFreq1( newFreqSetting );
 }
 
 function changeOsc1WaveformSelect() {
@@ -704,11 +604,6 @@ function VolumeTextChange2 () {
     reviseVolume2( newVolSetting );
 }
 
-function FreqTextChange2() {
-    var newFreqSetting = document.getElementById("frequency-knob-2").value;
-    reviseFreq2( newFreqSetting );
-}
-
 function changeOsc2WaveformSelect() {
     var osc2WaveformSelect = document.getElementById("waveformSelect2");
     var newType = osc2WaveformSelect.options[osc2WaveformSelect.selectedIndex].value;
@@ -730,11 +625,6 @@ function changeOsc2SemitoneSelect() {
 function VolumeTextChange3 () {
     var newVolSetting = document.getElementById("volume-knob-3").value;
     reviseVolume3( newVolSetting );
-}
-
-function FreqTextChange3() {
-    var newFreqSetting = document.getElementById("frequency-knob-3").value;
-    reviseFreq3( newFreqSetting );
 }
 
 function changeOsc3WaveformSelect() {
@@ -764,14 +654,20 @@ function reviseOnScreenKeyboardOctave ( newOctave ) {
     window.onScreenKeyboardOctave = newOctave;
 }
 
-function reviseVolume1 ( vol ) {
-    window.volSetting1 = vol;
-    osc1VolNode.gain.value = vol / 100;
+function reviseVolumeLFO ( vol ) {
+    window.LFOvol = vol;
 }
 
-function reviseFreq1 ( freq ) {
-    window.freqSetting1 = freq;
-    osc1.frequency.value = freq;
+function reviseFreqLFO ( freq ) {
+    window.LFOfreq = freq;
+}
+
+function reviseWaveformLFO ( type ) {
+    window.LFOwaveform = type;
+}
+
+function reviseVolume1 ( vol ) {
+    window.volSetting1 = vol;
 }
 
 function reviseWaveform1 ( type ) {
@@ -788,12 +684,6 @@ function reviseSemitoneOffset1 ( newVal ) {
 
 function reviseVolume2 ( vol ) {
     window.volSetting2 = vol;
-    osc2VolNode.gain.value = vol / 100;
-}
-
-function reviseFreq2 ( freq ) {
-    window.freqSetting2 = freq;
-    osc2.frequency.value = freq;
 }
 
 function reviseWaveform2 ( type ) {
@@ -810,12 +700,6 @@ function reviseSemitoneOffset2 ( newVal ) {
 
 function reviseVolume3 ( vol ) {
     window.volSetting3 = vol;
-    osc3VolNode.gain.value = vol / 100;
-}
-
-function reviseFreq3 ( freq ) {
-    window.freqSetting3 = freq;
-    osc3.frequency.value = freq;
 }
 
 function reviseWaveform3 ( type ) {
@@ -876,6 +760,22 @@ function reviseSustain3 ( newVol ) {
 
 function reviseRelease3 ( newMsVal ) {
     window.ReleaseSetting3 = ( newMsVal / 1000 );
+}
+
+function reviseAttackLFO ( newMsVal ) {
+    window.LFOattack = ( newMsVal / 1000 );
+}
+
+function reviseDecayLFO ( newMsVal ) {
+    window.LFOdecay = ( newMsVal / 1000 );
+}
+
+function reviseSustainLFO ( newVol ) {
+    window.LFOsustain = ( newVol );
+}
+
+function reviseReleaseLFO ( newMsVal ) {
+    window.LFOrelease = ( newMsVal / 1000 );
 }
 
 function updateAttackText1 ( ) {
@@ -1257,4 +1157,131 @@ function updateReleaseSlider3 ( ) {
     }
     
     reviseRelease3( releaseDisplay3.value );
+}
+
+                function updateAttackTextLFO ( ) {
+    var attackSelectLFO = document.getElementById("attackSelectLFO");
+    var attackDisplayLFO = document.getElementById("attackDisplayLFO");
+    
+    var newLinVal = attackSelectLFO.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    attackDisplayLFO.value = newVal.toFixed(2);
+    
+    reviseAttackLFO( attackDisplayLFO.value );
+}
+
+function updateAttackSliderLFO ( ) {
+    var attackDisplayLFO = document.getElementById("attackDisplayLFO");
+    var attackSelectLFO = document.getElementById("attackSelectLFO");
+    
+    var newVal = attackDisplayLFO.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            attackSelectLFO.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        attackSelectLFO.value = 5.5;
+    }
+    
+    reviseAttackLFO( attackDisplayLFO.value );
+}
+
+function updateDecayTextLFO ( newVol ) {
+    var decaySelectLFO = document.getElementById("decaySelectLFO");
+    var decayDisplayLFO = document.getElementById("decayDisplayLFO");
+    
+    var newLinVal = decaySelectLFO.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    decayDisplayLFO.value = newVal.toFixed(2);
+    
+    reviseDecayLFO( decayDisplayLFO.value );
+}
+
+function updateDecaySliderLFO ( newVol ) {                    
+    var decayDisplayLFO = document.getElementById("decayDisplayLFO");
+    var decaySelectLFO = document.getElementById("decaySelectLFO");
+    
+    var newVal = decayDisplayLFO.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            decaySelectLFO.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        decaySelectLFO.value = 5.5;
+    }
+    
+    reviseDecayLFO( decayDisplayLFO.value );
+}
+
+function updateSustainTextLFO ( ) {
+    var sustainSelectLFO = document.getElementById("sustainSelectLFO");
+    var sustainDisplayLFO = document.getElementById("sustainDisplayLFO");
+    var newVal = sustainSelectLFO.value;
+    
+    sustainDisplayLFO.value = newVal;
+    reviseSustainLFO( sustainSelectLFO.value );
+}
+
+function updateSustainSliderLFO ( ) {
+    var sustainDisplayLFO = document.getElementById("sustainDisplayLFO");
+    var sustainSelectLFO = document.getElementById("sustainSelectLFO");
+    
+    var newVal = sustainDisplayLFO.value;
+    sustainSelectLFO.value = newVal;
+    
+    reviseSustainLFO( sustainDisplayLFO.value );
+}
+
+function updateReleaseTextLFO ( ) {
+    var releaseSelectLFO = document.getElementById("releaseSelectLFO");
+    var releaseDisplayLFO = document.getElementById("releaseDisplayLFO");
+    
+    var newLinVal = releaseSelectLFO.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    releaseDisplayLFO.value = newVal.toFixed(2);
+    
+    reviseReleaseLFO( releaseDisplayLFO.value );
+}
+
+function updateReleaseSliderLFO ( ) {
+    var releaseDisplayLFO = document.getElementById("releaseDisplayLFO");
+    var releaseSelectLFO = document.getElementById("releaseSelectLFO");
+    
+    var newVal = releaseDisplayLFO.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            releaseSelectLFO.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        releaseSelectLFO.value = 5.5;
+    }
+    
+    reviseReleaseLFO( releaseDisplayLFO.value );
 }
