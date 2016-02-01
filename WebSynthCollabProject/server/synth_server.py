@@ -1,5 +1,5 @@
 # Socket server in python using select functi
-import sys, socket, select, os, MySQLdb, json, time, thread, struct
+import sys, socket, select, os, MySQLdb, json, time, thread, struct, binascii
 from base64 import b64encode
 from hashlib import sha1
 from mimetools import Message
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         host, user, password, dbname = getDbParams()
         db = MySQLdb.connect( host, user, password, dbname )
         cursor = db.cursor()
-        cursor.execute( "CREATE TABLE IF NOT EXISTS Collab_IDs ( id CHAR(24) NOT NULL PRIMARY KEY );" )
+        cursor.execute( "CREATE TABLE IF NOT EXISTS Collab_IDs ( id CHAR(48) NOT NULL PRIMARY KEY );" )
         db.close()
     
     db_host = None
@@ -67,13 +67,13 @@ if __name__ == "__main__":
         def __init__( self, clientID, collabID, connection, latencyEst ):
             self.clientID = clientID
             self.collabID = collabID
-            self.connection = conection
+            self.connection = connection
             self.latencyEst = latencyEst
     
     def generateNewCollabId ():
         "Generates a new collab ID, unique in the collab ID database."
         valid_id = False
-        new_collabid = os.urandom(24).decode("utf-8")
+        new_collabid = binascii.hexlify( os.urandom(24) )
         # DB code here ( Check for the stupidly unlikely event that this collab id is taken.
         # No user input is taken in this code.
         host, user, password, dbname = getDbParams()
@@ -96,22 +96,25 @@ if __name__ == "__main__":
         host, user, password, dbname = getDbParams()
         db = MySQLdb.connect( host, user, password, dbname )
         cursor = db.cursor()
-        while not valid_id:
-            cursor.execute( """SELECT id FROM  Collab_IDs
-                            WHERE id = %s;""", ( collabid, ) )
-            numrows = int (cursor.rowcount)
-            db.close()
-            if numrows == 0:
-                return False
-            else:
-                return True
+        cursor.execute( """SELECT id FROM  Collab_IDs
+                        WHERE id = %s;""", ( collabid, ) )
+        numrows = int (cursor.rowcount)
+        db.close()
+        if numrows == 0:
+            return False
+        else:
+            return True
     
     print "Collab server started on port " + str(PORT)
+    
+    # lots of adaptations and help from https://gist.github.com/jkp/3136208
     
     def receiveMessage( connection ):
         data = connection.recv(RECV_BUFFER)
     
         length = ord(data[1]) & 127
+        
+        
         masks = [ord(byte) for byte in data[2:6]]
         endChar = 6
         print "length:" + str(length)
@@ -143,7 +146,7 @@ if __name__ == "__main__":
     
     def clientThread ( connection, clientID ):
         #Sending message to connected client
-        preSendTime = lambda: int( round( time.time() * 1000 ) )
+        preSendTime = int( round( time.time() * 1000 ) )
         
         # deal with websocket handshake here
         
@@ -164,22 +167,12 @@ if __name__ == "__main__":
         
         print "handshake done."
         
-        sendMessage ( connection, '{"msgtype":"id"}' )
+        sendMessage ( connection, '{"msgtype": "id"}' )
         
         data = receiveMessage( connection )
         
-        print "response from client: " + data
-        
-        """connection.send( '{"msgtype": "id"}' )
-        
-        print "tried sending id request json"
-        
-        data = connection.recv(RECV_BUFFER)
-        
-        print "tried receiving from client"
-        
         receivedMessage = json.loads( data )
-        postSendTime = lambda: int( round( time.time() * 1000 ) )
+        postSendTime = int( round( time.time() * 1000 ) )
         latencyEst = ( postSendTime - preSendTime ) / 2
         name = None
         newId = None
@@ -189,17 +182,17 @@ if __name__ == "__main__":
             newId = generateNewCollabId()
             name = receivedMessage["name"]
             messageObject = {"msgtype":"setid", "collabid":newId}
-            connection.send( json.dumps( messageObject ) )
+            sendMessage ( connection, json.dumps( messageObject ) )
         elif receivedMessage["msgtype"] == "setid":
             name = receivedMessage["name"]
             if ( checkIfCollabIdExists( receivedMessage["collabid"] ) ):
                 messageObject = {"msgtype":"id_ok"}
-                connection.send( json.dumps( messageObject ) )
+                sendMessage ( connection, json.dumps( messageObject ) )
                 newId = receivedMessage["collabid"]
             else:
                 messageObject = {"msgtype":"setid" , "collabid":generateNewCollabId() }
                 newId = messageObject["collabid"]
-                connection.send( json.dumps( messageObject ) )
+                sendMessage ( connection, json.dumps( messageObject ) )
         else:
             print "Invalid message received."
             # invalid message
@@ -211,7 +204,7 @@ if __name__ == "__main__":
                 if client.collabID == newId and client.latencyEst > currentHighestLatency:
                     currentHighestLatency = client.latencyEst
             messageObject = {"msgtype":"onward-latency-update", "latency":currentHighestLatency}
-            connection.send( json.dumps( messageObject ) )
+            sendMessage ( connection, json.dumps( messageObject ) )
                     
             
             # then send the new client's latency to the other clients.
@@ -219,15 +212,15 @@ if __name__ == "__main__":
             messageObject = {"msgtype":"onward-latency-update", "latency":latencyEst}
             for client in Clients:
                 if client.collabID == newId:
-                    client.connection.send( json.dumps( messageObject ) )
+                    sendMessage ( client.connection, json.dumps( messageObject ) )
                     messageObject = {"msgtype":"client-joined", "name":name}
-                    client.connection.send( json.dumps( messageObject ) )
+                    sendMessage ( client.connection, json.dumps( messageObject ) )
             
             newClient = ConnectedClient( clientID, newId, connection, latencyEst )
             Clients.append( newClient )
             
             while True:
-                data = connection.recv(RECV_BUFFER)
+                data = receiveMessage( connection )
                 
                 if not data:
                     break
@@ -236,17 +229,17 @@ if __name__ == "__main__":
                 for client in Clients:
                     if ( not client.clientID == clientID ) and client.collabID == newId:
                         receivedMessage = json.loads(data)
-                        if not receivedMessage.msgtype == "chat":
-                            receivedMessage.name = name
-                            client.connection.send( json.dumps( receivedMessage ) )
+                        
+                        print data
+                        
+                        if receivedMessage['msgtype'] == "chat":
+                            receivedMessage['name'] = name
+                            sendMessage ( client.connection, json.dumps( receivedMessage ) )
                         else:
-                            client.connection.send( data )
-            
+                            sendMessage ( client.connection, data )
         
         
         connection.close()
-        
-        """
         
     
     while True:
