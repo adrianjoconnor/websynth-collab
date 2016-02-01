@@ -1,8 +1,37 @@
+knob {
+    width: 41px;
+    height: 25px;
+    position: absolute;
+    vertical-align: middle;
+    margin-top: 25px;
+    margin-left: -58px;
+    border: 0px;
+    font-weight: bold;
+    font-style: normal;
+    font-variant: normal;
+    font-stretch: normal; 
+    font-size: 15px;
+    line-height: normal;
+    font-family: Arial;
+    text-align: center; 
+    color: rgb(255, 236, 3);
+    padding: 0px;
+    -webkit-appearance: none;
+    background: none;
+    fgcolor : #ffec03;
+}
+
 .osc-controls {
     border: 2px dashed black;
     border-radius:   1em;
     margin: 1em;
     padding: 0.5em;
+}
+
+.osc-controls select {
+    display:    block;
+    clear:  both;
+    float:  left;
 }
 
 .osc-controls label {
@@ -12,6 +41,18 @@
     display:  block;
     clear:    both;
     float: left;
+}
+
+.osc-controls .dd-container {
+    display:  block;
+    clear:    both;
+    float: left;
+}
+
+.noteModifiers {
+    display:  block;
+    float: right;
+    position:   relative;
 }
 
 .osc-controls canvas {
@@ -25,5 +66,9 @@
         float: right;
         width:  45%;
         height: 8em;
+    }
+    
+    .noteModifiers select {
+        clear:  none;
     }
 }
