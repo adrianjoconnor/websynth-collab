@@ -1,7 +1,17 @@
 .osc-controls {
     border: 2px dashed black;
+    border-radius:   1em;
     margin: 1em;
     padding: 0.5em;
+}
+
+.osc-controls label {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    
+    display:  block;
+    clear:    both;
+    float: left;
 }
 
 .osc-controls canvas {
@@ -10,6 +20,10 @@
 
 @media screen and (min-width: 769px) {
     .osc-controls {
-        
+        display:  block;
+        clear:    both;
+        float: right;
+        width:  45%;
+        height: 8em;
     }
-}  
+}

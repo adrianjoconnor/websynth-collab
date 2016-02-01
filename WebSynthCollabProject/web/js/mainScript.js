@@ -132,21 +132,13 @@ Osc.prototype.changeSemitoneOffset = function ( newVal ) {
     this.semitoneOffset = newVal;
 };
 
-function LFO ( freq, vol, waveform, attack, decay, sustain, release ) {
-    this.oscillator = webAudioContext.createOscillator();
-    this.volumeNode = webAudioContext.createGain();
-    
-    this.oscillator.frequency.value = freq;
-    this.volumeNode.gain.value = vol / 100;
-    this.oscillator.type = waveform;
-    
-    this.attack = attack;
-    this.decay = decay;
-    this.sustain = sustain;
-    this.release = release;
-    
-    this.envelopeNode = webAudioContext.createGain();
+// An LFO is an oscillator set to a very low (usually subsonic) frequency.
+// It has no octave or semitone offset since it has a fixed frequency.
+function makeLFO ( freq, vol, waveform, attack, decay, sustain, release ) {
+    return new Osc ( freq, vol, waveform, attack, decay, sustain, release, 1, 0 );
 }
+
+/*
 
 LFO.prototype.connect = function () {
     this.oscillator.connect( this.envelopeNode );
@@ -196,11 +188,13 @@ LFO.prototype.releaseNow = function () {
     this.envelopeNode.gain.exponentialRampToValueAtTime( 0.0001, currentTime + this.release );
 };
 
+*/
+
 function Synth () {
     this.osc1 = new Osc( window.freqSetting1, window.volSetting1, window.waveformSetting1, window.AttackSetting1, window.DecaySetting1, window.SustainSetting1, window.ReleaseSetting1, window.OctaveMultiplierValue1, SemitoneOffsetValue1 );
     this.osc2 = new Osc( window.freqSetting2, window.volSetting2, window.waveformSetting2, window.AttackSetting2, window.DecaySetting2, window.SustainSetting2, window.ReleaseSetting2, window.OctaveMultiplierValue2, SemitoneOffsetValue2 );
     this.osc3 = new Osc( window.freqSetting3, window.volSetting3, window.waveformSetting3, window.AttackSetting3, window.DecaySetting3, window.SustainSetting3, window.ReleaseSetting3, window.OctaveMultiplierValue3, SemitoneOffsetValue3 );
-    this.LFO = new Osc( window.LFOfreq, window.LFOvol, window.LFOwaveform, window.LFOattack, window.LFOdecay, window.LFOsustain, window.LFOrelease, 1, 0 );
+    this.LFO = makeLFO( window.LFOfreq, window.LFOvol, window.LFOwaveform, window.LFOattack, window.LFOdecay, window.LFOsustain, window.LFOrelease );
     
     this.midiGainNode = webAudioContext.createGain();
     this.masterVolumeNode = webAudioContext.createGain();
