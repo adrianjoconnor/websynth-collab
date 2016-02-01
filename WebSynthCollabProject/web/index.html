@@ -16,6 +16,7 @@
         <label for="A4FreqSelect">Note A4 Freq. (Tuning)</label><select id="A4FreqSelect" onchange="changeA4Freq()"><option value="432">432hz</option><option value="440" selected="true">440hz</option><option value="444">444hz</option></select>
         <openmusic-piano-keyboard id="onScreenKeyboard" octaves="2"></openmusic-piano-keyboard>
         <label for="onScreenKeyboardOctaveSelect">Octave</label><select id="onScreenKeyboardOctaveSelect" onchange="changeOnScreenKeyboardOctaveSelect()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select>
+        <fieldset id="recorder"><legend>Recorder</legend><button id="recordButton" onclick="pressRecordButton()">Record</button></fieldset>
         <div id="lfo-controls">
             <div class="envelopeControls">
                 <label for="attackSelectLFO">Attack(ms)</label><input id="attackSelectLFO" type ="range" min ="0.6" value="0.6" max="5.5" step ="0.1" onchange="updateAttackTextLFO()" /><input type="text" value="0.04" id="attackDisplayLFO" onchange="updateAttackSliderLFO()"></span>

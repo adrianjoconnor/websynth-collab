@@ -13,6 +13,8 @@ var outputChannels = 2;
 
 ///////////////////////////////////////////////////////
 
+window.recording = false;
+
 var webAudioContext = new AudioContext();
 
 window.exitNode = webAudioContext.createGain();
@@ -441,13 +443,11 @@ function accessGrantedToMIDI ( MIDIobject ) {
 
     window.MidiInfoObject = MIDIobject;
 
-    console.log( window.MidiInfoObject );
     var midiInputIterator = window.MidiInfoObject.inputs.values();
     
     var midiKeyboardSelect = document.getElementById("midiKeyboard");
     
     for (var midiInput = midiInputIterator.next(); ! midiInput.done ; midiInput = midiInputIterator.next() ) {
-        console.log( midiInput.value );
         
         var inputLabel = "(" + midiInput.value.id + ") " +midiInput.value.manufacturer + " " + midiInput.value.name;
         var inputId = midiInput.value.id;
@@ -497,10 +497,6 @@ function turnNoteOn ( note, velocity ) {
                     window.noteA4Frequency * Math.pow( 2, ( ( note2 - 69 ) / 12 ) ) );
                 window.synths[curSynth].osc3.changeFrequency (
                     window.noteA4Frequency * Math.pow( 2, ( ( note3 - 69 ) / 12 ) ) );
-                
-                console.log( "Osc1 freq: " + ( window.noteA4Frequency * Math.pow( 2, ( ( note1 - 69 ) / 12 ) ) ) );
-                console.log( "Osc2 freq: " + ( window.noteA4Frequency * Math.pow( 2, ( ( note2 - 69 ) / 12 ) ) ) );
-                console.log( "Osc3 freq: " + ( window.noteA4Frequency * Math.pow( 2, ( ( note3 - 69 ) / 12 ) ) ) );
                 
                 window.synths[curSynth].connect();
                 window.synths[curSynth].start();
@@ -1297,6 +1293,8 @@ function updateReleaseSliderLFO ( ) {
 }
 
 function startRecording() {
+    window.recording = true;
+
     window.recordingBuffer = new Array();
     window.recordingNode = webAudioContext.createScriptProcessor( window.recordingBuffersize, window.inputChannels, window.outputChannels );
     window.recordingNode.onaudioprocess = function(audioProcessingEvent) {
@@ -1341,20 +1339,62 @@ function stopRecording() {
         window.data[curSample] = window.recordingBuffer[curSample] * maxAmp ;
     }
     
-    var wave = new RIFFWAVE(); // create the wave file
-    wave.header.sampleRate = webAudioContext.sampleRate;
-    wave.header.numChannels = 2;
-    wave.header.bitsPerSample = bitDepth;
+    window.waveRecording = new RIFFWAVE(); // create the wave file
+    window.waveRecording.header.sampleRate = webAudioContext.sampleRate;
+    window.waveRecording.header.numChannels = 2;
+    window.waveRecording.header.bitsPerSample = bitDepth;
     //
-    wave.Make( window.data );
+    window.waveRecording.Make( window.data );
     
-    var link = document.createElement("a");
+    window.recordingLink = document.createElement("a");
     var date = new Date();
-    link.download = "synth-recording-" + date.getDate() + "-" + date.getMonth() + "-" + date.getFullYear() + " " + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds() + "-" + date.getMilliseconds() + ".wav";
-    link.href = wave.dataURI;
-    link.click();
+    window.recordingLink.download = "synth-recording-" + date.getDate() + "-" + date.getMonth() + "-" + date.getFullYear() + " " + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds() + "-" + date.getMilliseconds() + ".wav";
+    window.recordingLink.href = window.waveRecording.dataURI;
+    window.recordingLink.innerHTML = "Download...";
+    // recordingLink.click();
     
-    var audio = new Audio(); // create the HTML5 audio element
-    audio.src = wave.dataURI;
-    audio.play();
+    window.audio = new Audio(); // create the HTML5 audio element
+    window.audio.src = window.waveRecording.dataURI;
+    window.audio.controls = true;
+    
+    $('#recorder').append( window.audio );
+    $('#recorder').append( window.recordingLink );
+    
+    window.recording = false;
+}
+
+function pressRecordButton () {
+    var recordButton = document.getElementById("recordButton");
+    
+    if ( window.recording ) {
+        recordButton.innerHTML = "Record";
+        stopRecording();
+    } else {
+        recordButton.innerHTML = "Stop Recording";
+        startRecording();
+    }
+}
+
+function saveSetting ( settingName, value ) {
+    localStorage.setItem( settingName , value );
+}
+
+function loadSettings() {
+    var settings = Array();
+    for ( var curSetting = 0; curSetting < localStorage.length; curSetting++ ){
+        window[ localStorage.key(curSetting) ] = localStorage.getItem( localStorage.key(curSetting) );
+    }
+}
+
+function downloadSettingsFile () {
+    // Use JSON
+    
+}
+
+function loadSettingsFile ( JSONSettings ) {
+                        
+}
+
+function resetToDefault () {
+    
 }

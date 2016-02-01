@@ -21,6 +21,10 @@ knob {
     fgcolor : #ffec03;
 }
 
+#recorder {
+    display:    inline;
+}
+
 .osc-controls {
     border: 2px dashed black;
     border-radius:   1em;
