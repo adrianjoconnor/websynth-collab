@@ -12,8 +12,9 @@ var webAudioContext = new AudioContext();
 
 var noteA4Frequency = 440; // value in hz
 window.numSynths = 90;
-window.masterVolSetting = 25;
+window.masterVolSetting = 35;
 window.onScreenKeyboardOctave = 0;
+window.onScreenKeyboardVelocity = 97;
 
 window.oscillatorTypes = [ 'sine', 'square', 'sawtooth', 'triangle' ];
 
@@ -52,9 +53,9 @@ window.volSetting1 = 35;
 window.freqSetting1 = 440;
 window.waveformSetting1 = 'sine';
 window.AttackSetting1 = 0.04; // Attack value is in seconds.
-window.DecaySetting1 = 0.1; // Decay value is in seconds.
+window.DecaySetting1 = 0.35; // Decay value is in seconds.
 window.SustainSetting1 = 0.8;
-window.ReleaseSetting1 = 0.14; // Release value is in seconds.
+window.ReleaseSetting1 = 0.64; // Release value is in seconds.
 window.OctaveMultiplierValue1 = 0;
 window.SemitoneOffsetValue1 = 0;
 
@@ -62,9 +63,9 @@ window.volSetting2 = 35;
 window.freqSetting2 = 220;
 window.waveformSetting2 = 'square';
 window.AttackSetting2 = 0.04;
-window.DecaySetting2 = 0.1;
+window.DecaySetting2 = 0.35;
 window.SustainSetting2 = 0.8;
-window.ReleaseSetting2 = 0.14;
+window.ReleaseSetting2 = 0.64;
 window.OctaveMultiplierValue2 = 0;
 window.SemitoneOffsetValue2 = 0;
 
@@ -72,20 +73,25 @@ window.volSetting3 = 20;
 window.freqSetting3 = 660;
 window.waveformSetting3 = 'sawtooth';
 window.AttackSetting3 = 0.04;
-window.DecaySetting3 = 0.1;
+window.DecaySetting3 = 0.35;
 window.SustainSetting3 = 0.8;
-window.ReleaseSetting3 = 0.14;
+window.ReleaseSetting3 = 0.64;
 window.OctaveMultiplierValue3 = 0;
 window.SemitoneOffsetValue3 = 0;
 
 window.LFOvol = 50;
 window.LFOfreq = 1;
 window.LFOwaveform = 'sine';
-window.LFOattack = 0;
-window.LFOdecay = 100;
+window.LFOattack = 0.04;
+window.LFOdecay = 0.35;
 window.LFOsustain = 0.8;
-window.LFOrelease = 10;
+window.LFOrelease = 0.64;
 
+function mobilecheck ( ) {
+  var check = false;
+  (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4)))check = true})(navigator.userAgent||navigator.vendor||window.opera);
+  return check;
+}
 
 function Osc ( freq, vol, waveform, attack, decay, sustain, release, octaveMultiplier, semitoneOffset ) {
     this.oscillator = webAudioContext.createOscillator();
@@ -101,8 +107,6 @@ function Osc ( freq, vol, waveform, attack, decay, sustain, release, octaveMulti
     this.release = release;
     
     this.envelopeNode = webAudioContext.createGain();
-    
-    
     
     this.octaveMultiplier = octaveMultiplier;
     this.semitoneOffset = semitoneOffset;
@@ -329,16 +333,27 @@ osc3VolNode.gain.value = volSetting3 / 100;
 
 $( document ).ready(function() {
 
+    if ( mobilecheck() ) {
+        $('#onScreenKeyboard').attr('octaves','1');
+        $('#onScreenKeyboardOctaveSelect').append($('<option>', {
+            value: 12,
+            text: '12'
+        }));
+    }
+
     // Register on-screen keyboard.
 
     onScreenKeyboard = document.getElementById('onScreenKeyboard');
 
     onScreenKeyboard.addEventListener('noteon', function(e) {
-        console.log( "howiyagettinohnn: " + e.detail.index );
+        var note = parseInt(e.detail.index) + 36 + ( parseInt(window.onScreenKeyboardOctave) * 12 );
+        var velocity = parseInt(window.onScreenKeyboardVelocity);
+        turnNoteOn ( note, velocity );
     });
 
     onScreenKeyboard.addEventListener('noteoff', function(e) {
-        console.log( "howiyagettinohff: " + e.detail.index );
+        var note = parseInt(e.detail.index) + 36 + ( parseInt(window.onScreenKeyboardOctave) * 12 );
+        turnNoteOff ( note );
     });
 
     // Create multiple synths for chords.
@@ -506,27 +521,21 @@ function accessGrantedToMIDI ( MIDIobject ) {
 }
 
 function processMidiInput ( midiMessage ) {
-
     var midiInfo = midiMessage.data;
     
     if ( midiInfo[0] == 128 || ( midiInfo[0] == 144 && midiInfo[2] == 0 ) ) { // Note off message
         var note = midiInfo[1];
-        
-        $("#onScreenKeyboard").find("div" + "[data-index='" + (note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").removeClass("active");
-        
-        for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
-            if ( window.synthStates[curSynth] == note ) {
-                window.synths[curSynth].setupReleaseCallback( curSynth );
-                
-                break;
-            }
-        }
-        
+        turnNoteOff ( note );
     } else if ( midiInfo[0] == 144 ) { // Note on message                        
         var note = midiInfo[1];
         var velocity = midiInfo[2];
-        
-        for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+        turnNoteOn ( note, velocity );
+        $("#onScreenKeyboard").find("div" + "[data-index='" + ( note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").addClass("active");
+    }
+}
+
+function turnNoteOn ( note, velocity ) {
+    for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
             if ( window.synthStates[curSynth] == 128 ) {
                 window.synthStates[curSynth] = note;
                 window.synths[curSynth] = new Synth();
@@ -561,8 +570,18 @@ function processMidiInput ( midiMessage ) {
                 break;
             }
         }
-    }
-    
+}
+
+function turnNoteOff ( note ) {
+    $("#onScreenKeyboard").find("div" + "[data-index='" + (note - 36 - ( window.onScreenKeyboardOctave * 12 ) ) + "']").removeClass("active");
+        
+        for ( var curSynth = 0; curSynth < window.numSynths; curSynth++ ) {
+            if ( window.synthStates[curSynth] == note ) {
+                window.synths[curSynth].setupReleaseCallback( curSynth );
+                
+                break;
+            }
+        }
 }
 
 function switchMidiKeyboard () {
@@ -811,8 +830,306 @@ function reviseSemitoneOffset3 ( newVal ) {
     window.SemitoneOffsetValue3 = newVal;
 }
 
+function reviseAttack1 ( newMsVal ) {
+    window.AttackSetting1 = ( newMsVal / 1000 );
+}
+
+function reviseDecay1 ( newMsVal ) {
+    window.DecaySetting1 = ( newMsVal / 1000 );
+}
+
+function reviseSustain1 ( newVol ) {
+    window.SustainSetting1 = ( newVol );
+}
+
+function reviseRelease1 ( newMsVal ) {
+    window.ReleaseSetting1 = ( newMsVal / 1000 );
+}
+
+function reviseAttack2 ( newMsVal ) {
+    window.AttackSetting2 = ( newMsVal / 1000 );
+}
+
+function reviseDecay2 ( newMsVal ) {
+    window.DecaySetting2 = ( newMsVal / 1000 );
+}
+
+function reviseSustain2 ( newVol ) {
+    window.SustainSetting2 = ( newVol );
+}
+
+function reviseRelease2 ( newMsVal ) {
+    window.ReleaseSetting2 = ( newMsVal / 1000 );
+}
+
 function reviseAttack3 ( newMsVal ) {
     window.AttackSetting3 = ( newMsVal / 1000 );
+}
+
+function reviseDecay3 ( newMsVal ) {
+    window.DecaySetting3 = ( newMsVal / 1000 );
+}
+
+function reviseSustain3 ( newVol ) {
+    window.SustainSetting3 = ( newVol );
+}
+
+function reviseRelease3 ( newMsVal ) {
+    window.ReleaseSetting3 = ( newMsVal / 1000 );
+}
+
+function updateAttackText1 ( ) {
+    var attackSelect1 = document.getElementById("attackSelect1");
+    var attackDisplay1 = document.getElementById("attackDisplay1");
+    
+    var newLinVal = attackSelect1.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    attackDisplay1.value = newVal.toFixed(2);
+    
+    reviseAttack1( attackDisplay1.value );
+}
+
+function updateAttackSlider1 ( ) {
+    var attackDisplay1 = document.getElementById("attackDisplay1");
+    var attackSelect1 = document.getElementById("attackSelect1");
+    
+    var newVal = attackDisplay1.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            attackSelect1.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        attackSelect1.value = 5.5;
+    }
+    
+    reviseAttack1( attackDisplay1.value );
+}
+
+function updateDecayText1 ( newVol ) {
+    var decaySelect1 = document.getElementById("decaySelect1");
+    var decayDisplay1 = document.getElementById("decayDisplay1");
+    
+    var newLinVal = decaySelect1.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    decayDisplay1.value = newVal.toFixed(2);
+    
+    reviseDecay1( decayDisplay1.value );
+}
+
+function updateDecaySlider1 ( newVol ) {                    
+    var decayDisplay1 = document.getElementById("decayDisplay1");
+    var decaySelect1 = document.getElementById("decaySelect1");
+    
+    var newVal = decayDisplay1.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            decaySelect1.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        decaySelect1.value = 5.5;
+    }
+    
+    reviseDecay1( decayDisplay1.value );
+}
+
+function updateSustainText1 ( ) {
+    var sustainSelect1 = document.getElementById("sustainSelect1");
+    var sustainDisplay1 = document.getElementById("sustainDisplay1");
+    var newVal = sustainSelect1.value;
+    
+    sustainDisplay1.value = newVal;
+    reviseSustain1( sustainSelect1.value );
+}
+
+function updateSustainSlider1 ( ) {
+    var sustainDisplay1 = document.getElementById("sustainDisplay1");
+    var sustainSelect1 = document.getElementById("sustainSelect1");
+    
+    var newVal = sustainDisplay1.value;
+    sustainSelect1.value = newVal;
+    
+    reviseSustain1( sustainDisplay1.value );
+}
+
+function updateReleaseText1 ( ) {
+    var releaseSelect1 = document.getElementById("releaseSelect1");
+    var releaseDisplay1 = document.getElementById("releaseDisplay1");
+    
+    var newLinVal = releaseSelect1.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    releaseDisplay1.value = newVal.toFixed(2);
+    
+    reviseRelease1( releaseDisplay1.value );
+}
+
+function updateReleaseSlider1 ( ) {
+    var releaseDisplay1 = document.getElementById("releaseDisplay1");
+    var releaseSelect1 = document.getElementById("releaseSelect1");
+    
+    var newVal = releaseDisplay1.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            releaseSelect1.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        releaseSelect1.value = 5.5;
+    }
+    
+    reviseRelease1( releaseDisplay1.value );
+}
+
+function updateAttackText2 ( ) {
+    var attackSelect2 = document.getElementById("attackSelect2");
+    var attackDisplay2 = document.getElementById("attackDisplay2");
+    
+    var newLinVal = attackSelect2.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    attackDisplay2.value = newVal.toFixed(2);
+    
+    reviseAttack2( attackDisplay2.value );
+}
+
+function updateAttackSlider2 ( ) {
+    var attackDisplay2 = document.getElementById("attackDisplay2");
+    var attackSelect2 = document.getElementById("attackSelect2");
+    
+    var newVal = attackDisplay2.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            attackSelect2.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        attackSelect2.value = 5.5;
+    }
+    
+    reviseAttack2( attackDisplay2.value );
+}
+
+function updateDecayText2 ( newVol ) {
+    var decaySelect2 = document.getElementById("decaySelect2");
+    var decayDisplay2 = document.getElementById("decayDisplay2");
+    
+    var newLinVal = decaySelect2.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    decayDisplay2.value = newVal.toFixed(2);
+    
+    reviseDecay2( decayDisplay2.value );
+}
+
+function updateDecaySlider2 ( newVol ) {                    
+    var decayDisplay2 = document.getElementById("decayDisplay2");
+    var decaySelect2 = document.getElementById("decaySelect2");
+    
+    var newVal = decayDisplay2.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            decaySelect2.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        decaySelect2.value = 5.5;
+    }
+    
+    reviseDecay2( decayDisplay2.value );
+}
+
+function updateSustainText2 ( ) {
+    var sustainSelect2 = document.getElementById("sustainSelect2");
+    var sustainDisplay2 = document.getElementById("sustainDisplay2");
+    var newVal = sustainSelect2.value;
+    
+    sustainDisplay2.value = newVal;
+    reviseSustain2( sustainSelect2.value );
+}
+
+function updateSustainSlider2 ( ) {
+    var sustainDisplay2 = document.getElementById("sustainDisplay2");
+    var sustainSelect2 = document.getElementById("sustainSelect2");
+    
+    var newVal = sustainDisplay2.value;
+    sustainSelect2.value = newVal;
+    
+    reviseSustain2( sustainDisplay2.value );
+}
+
+function updateReleaseText2 ( ) {
+    var releaseSelect2 = document.getElementById("releaseSelect2");
+    var releaseDisplay2 = document.getElementById("releaseDisplay2");
+    
+    var newLinVal = releaseSelect2.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    releaseDisplay2.value = newVal.toFixed(2);
+    
+    reviseRelease2( releaseDisplay2.value );
+}
+
+function updateReleaseSlider2 ( ) {
+    var releaseDisplay2 = document.getElementById("releaseDisplay2");
+    var releaseSelect2 = document.getElementById("releaseSelect2");
+    
+    var newVal = releaseDisplay2.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            releaseSelect2.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        releaseSelect2.value = 5.5;
+    }
+    
+    reviseRelease2( releaseDisplay2.value );
 }
 
 function updateAttackText3 ( ) {
@@ -851,8 +1168,59 @@ function updateAttackSlider3 ( ) {
     reviseAttack3( attackDisplay3.value );
 }
 
-function reviseRelease3 ( newMsVal ) {
-    window.ReleaseSetting3 = ( newMsVal / 1000 );
+function updateDecayText3 ( newVol ) {
+    var decaySelect3 = document.getElementById("decaySelect3");
+    var decayDisplay3 = document.getElementById("decayDisplay3");
+    
+    var newLinVal = decaySelect3.value;
+    var newVal = Math.pow(newLinVal, newLinVal) - 0.7;
+    
+    decayDisplay3.value = newVal.toFixed(2);
+    
+    reviseDecay3( decayDisplay3.value );
+}
+
+function updateDecaySlider3 ( newVol ) {                    
+    var decayDisplay3 = document.getElementById("decayDisplay3");
+    var decaySelect3 = document.getElementById("decaySelect3");
+    
+    var newVal = decayDisplay3.value;
+    
+    var max = true;
+    var curIndex = 0;
+    for ( var curVal = 0.6; curVal < 5.5; curVal+= 0.1 ) {
+        if ( window.expVals[curIndex] >= newVal ) {
+            decaySelect3.value = curVal;
+            max = false;
+            break;
+        }
+        curIndex++;
+    }
+    
+    if ( max ) {
+        decaySelect3.value = 5.5;
+    }
+    
+    reviseDecay3( decayDisplay3.value );
+}
+
+function updateSustainText3 ( ) {
+    var sustainSelect3 = document.getElementById("sustainSelect3");
+    var sustainDisplay3 = document.getElementById("sustainDisplay3");
+    var newVal = sustainSelect3.value;
+    
+    sustainDisplay3.value = newVal;
+    reviseSustain3( sustainSelect3.value );
+}
+
+function updateSustainSlider3 ( ) {
+    var sustainDisplay3 = document.getElementById("sustainDisplay3");
+    var sustainSelect3 = document.getElementById("sustainSelect3");
+    
+    var newVal = sustainDisplay3.value;
+    sustainSelect3.value = newVal;
+    
+    reviseSustain3( sustainDisplay3.value );
 }
 
 function updateReleaseText3 ( ) {
@@ -864,7 +1232,7 @@ function updateReleaseText3 ( ) {
     
     releaseDisplay3.value = newVal.toFixed(2);
     
-    reviseAttack3( releaseDisplay3.value );
+    reviseRelease3( releaseDisplay3.value );
 }
 
 function updateReleaseSlider3 ( ) {

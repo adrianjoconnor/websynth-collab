@@ -49,10 +49,18 @@ knob {
     float: left;
 }
 
-.noteModifiers {
+.noteModifiers .envelopeControls {
     display:  block;
-    float: right;
+    clear:  both;
     position:   relative;
+}
+
+.noteModifiers {
+    float: right;
+}
+
+.envelopeControls {
+    float: left;
 }
 
 .osc-controls canvas {
@@ -65,7 +73,7 @@ knob {
         clear:    both;
         float: right;
         width:  45%;
-        height: 8em;
+        height: 16em;
     }
     
     .noteModifiers select {

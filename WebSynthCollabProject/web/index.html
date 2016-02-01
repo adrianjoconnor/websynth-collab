@@ -27,6 +27,12 @@
             <div class="noteModifiers">
                 <label for="semitoneSelect1">Semitone Offset</label><select id="semitoneSelect1" onchange="changeOsc1SemitoneSelect()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select>
             </div>
+            <div class="envelopeControls">
+                <label for="attackSelect1">Attack(ms)</label><input id="attackSelect1" type ="range" min ="0.6" value="0.6" max="5.5" step ="0.1" onchange="updateAttackText1()" /><input type="text" value="0.04" id="attackDisplay1" onchange="updateAttackSlider1()"></span>
+                <label for="decaySelect1">Decay(ms)</label><input id="decaySelect1" type ="range" min ="0.6" value="1.0" max="5.5" step ="0.1" onchange="updateDecayText1()" /><input type="text" value="0.35" id="decayDisplay1" onchange="updateDecaySlider1()"></span>
+                <label for="sustainSelect1">Sustain(vol)</label><input id="sustainSelect1" type ="range" min ="0.0" value="0.8" max="1.0" step ="0.01" onchange="updateSustainText1()" /><input type="text" value="0.8" id="sustainDisplay1" onchange="updateSustainSlider1()"></span>
+                <label for="releaseSelect1">Release(ms)</label><input id="releaseSelect1" type ="range" min ="0.6" value="1.3" max="5.5" step ="0.1" onchange="updateReleaseText1()" /><input type="text" value="0.64" id="releaseDisplay1" onchange="updateReleaseSlider1()"></span>
+            </div>
         </div>
         <div class="osc-controls">
             <label for="frequency-knob-2">Frequency (Hz)</label></label><input class="knob" class="osc-knob" onchange="FreqTextChange2()" id="frequency-knob-2" value="220" data-displayprevious="true" data-fgcolor="#ffec03" data-skin="tron" data-cursor="true" />
@@ -37,6 +43,12 @@
             </div>
             <div class="noteModifiers">            
                 <label for="semitoneSelect2">Semitone Offset</label><select id="semitoneSelect2" onchange="changeOsc2SemitoneSelect()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select>
+            </div>
+            <div class="envelopeControls">
+                <label for="attackSelect2">Attack(ms)</label><input id="attackSelect2" type ="range" min ="0.6" value="0.6" max="5.5" step ="0.1" onchange="updateAttackText2()" /><input type="text" value="0.04" id="attackDisplay2" onchange="updateAttackSlider2()"></span>
+                <label for="decaySelect2">Decay(ms)</label><input id="decaySelect2" type ="range" min ="0.6" value="1.0" max="5.5" step ="0.1" onchange="updateDecayText2()" /><input type="text" value="0.35" id="decayDisplay2" onchange="updateDecaySlider2()"></span>
+                <label for="sustainSelect2">Sustain(vol)</label><input id="sustainSelect2" type ="range" min ="0.0" value="0.8" max="1.0" step ="0.01" onchange="updateSustainText2()" /><input type="text" value="0.8" id="sustainDisplay2" onchange="updateSustainSlider2()"></span>
+                <label for="releaseSelect2">Release(ms)</label><input id="releaseSelect2" type ="range" min ="0.6" value="1.3" max="5.5" step ="0.1" onchange="updateReleaseText2()" /><input type="text" value="0.64" id="releaseDisplay2" onchange="updateReleaseSlider2()"></span>
             </div>
         </div>
         <div class="osc-controls">
@@ -50,8 +62,10 @@
                 <label for="semitoneSelect3">Semitone Offset</label><select id="semitoneSelect3" onchange="changeOsc3SemitoneSelect()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select>
             </div>
             <div class="envelopeControls">
-                <label for="attackSelect3">Attack</label><input id="attackSelect3" type ="range" min ="0.6" value="0.6" max="5.5" step ="0.1" onchange="updateAttackText3()" /><input type="text" value="0.04" id="attackDisplay3" onchange="updateAttackSlider3()"></span>
-                <label for="releaseSelect3">Release</label><input id="releaseSelect3" type ="range" min ="0.6" value="0.6" max="5.5" step ="0.1" onchange="updateReleaseText3()" /><input type="text" value="0.04" id="releaseDisplay3" onchange="updateReleaseSlider3()"></span>
+                <label for="attackSelect3">Attack(ms)</label><input id="attackSelect3" type ="range" min ="0.6" value="0.6" max="5.5" step ="0.1" onchange="updateAttackText3()" /><input type="text" value="0.04" id="attackDisplay3" onchange="updateAttackSlider3()"></span>
+                <label for="decaySelect3">Decay(ms)</label><input id="decaySelect3" type ="range" min ="0.6" value="1.0" max="5.5" step ="0.1" onchange="updateDecayText3()" /><input type="text" value="0.35" id="decayDisplay3" onchange="updateDecaySlider3()"></span>
+                <label for="sustainSelect3">Sustain(vol)</label><input id="sustainSelect3" type ="range" min ="0.0" value="0.8" max="1.0" step ="0.01" onchange="updateSustainText3()" /><input type="text" value="0.8" id="sustainDisplay3" onchange="updateSustainSlider3()"></span>
+                <label for="releaseSelect3">Release(ms)</label><input id="releaseSelect3" type ="range" min ="0.6" value="1.3" max="5.5" step ="0.1" onchange="updateReleaseText3()" /><input type="text" value="0.64" id="releaseDisplay3" onchange="updateReleaseSlider3()"></span>
             </div>
         </div>
         <br/>
