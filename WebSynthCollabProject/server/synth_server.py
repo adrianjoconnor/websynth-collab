@@ -5,7 +5,7 @@ from mimetools import Message
 from StringIO import StringIO
 
 if __name__ == "__main__":
-    # config file is passed as the first command line parameter.
+    # Config file is passed as the first command line parameter.
     RECV_BUFFER = 2048 # power of 2
     PORT = 6520
     
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     
     print "Collab server started on port " + str(PORT)
     
-    # lots of adaptations and help from https://gist.github.com/jkp/3136208
+    # Lots of adaptations and help from https://gist.github.com/jkp/3136208
     
     def receiveMessage( connection ):
         data = connection.recv(RECV_BUFFER)
@@ -143,10 +143,10 @@ if __name__ == "__main__":
         connection.send(message)
     
     def clientThread ( connection, clientID ):
-        #Sending message to connected client
+        # Sending message to connected client
         preSendTime = int( round( time.time() * 1000 ) )
         
-        # deal with WebSocket handshake here
+        # Deal with WebSocket handshake here
         
         magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
         
@@ -193,10 +193,10 @@ if __name__ == "__main__":
                 sendMessage ( connection, json.dumps( messageObject ) )
         else:
             print "Invalid message received."
-            # invalid message
+            # invalid message from client.
             
         if not newId == None:
-            # send highest current latency to this client
+            # Send highest current latency to this client
             currentHighestLatency = 10
             for client in Clients:
                 if client.collabID == newId and client.latencyEst > currentHighestLatency:
@@ -205,7 +205,7 @@ if __name__ == "__main__":
             sendMessage ( connection, json.dumps( messageObject ) )
                     
             
-            # then send the new client's latency to the other clients.s
+            # Then send the new client's latency to the other clients.s
             messageObject = {"msgtype":"onward-latency-update", "latency":latencyEst}
             for client in Clients:
                 if client.collabID == newId:
@@ -222,7 +222,7 @@ if __name__ == "__main__":
                 if not data:
                     break
                 
-                # iterate through clients and send to ones with collabid that aren't this clientid
+                # Iterate through clients and send to ones with collabid that aren't this clientid
                 for client in Clients:
                     if ( not client.clientID == clientID ) and client.collabID == newId:
                         receivedMessage = json.loads(data)
@@ -240,13 +240,13 @@ if __name__ == "__main__":
         
     
     while True:
-        #wait to accept a connection - blocking call
+        # Wait to accept a connection - blocking call
         connection, addr = server_socket.accept()
         
         currentClientID += 1
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
         
-        # start a new thread to handle this client's connection.
+        # Start a new thread to handle this client's connection.
         thread.start_new_thread( clientThread ,(connection, currentClientID ) )
         
     server_socket.close()
