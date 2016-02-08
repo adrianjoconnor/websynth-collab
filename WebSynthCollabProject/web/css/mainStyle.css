@@ -21,6 +21,30 @@ knob {
     fgcolor : #ffec03;
 }
 
+.knob-group {
+    display:    inline-block;
+}
+
+#midiKeyboard {
+    
+}
+
+#save-load {
+    display:   inline;
+}
+
+#presets {
+    display:   inline;
+}
+
+#filter {
+    display:    inline;
+}
+
+#master {
+    display:    inline;
+}
+
 #recorder {
     display:    inline;
 }
@@ -30,6 +54,7 @@ knob {
     border-radius:   1em;
     margin: 1em;
     padding: 0.5em;
+    display:    inline;
 }
 
 .osc-controls select {
@@ -53,18 +78,30 @@ knob {
     float: left;
 }
 
+.knob-label {
+    display:   block;
+}
+
 .noteModifiers .envelopeControls {
     display:  block;
     clear:  both;
-    position:   relative;
 }
 
 .noteModifiers {
-    float: right;
+    display:    block;
+}
+
+#lfo-controls {
+    display:    inline;
 }
 
 .envelopeControls {
     float: left;
+    display:    block;
+}
+
+.envelopeControls div {
+    display:    block;
 }
 
 .osc-controls canvas {
@@ -73,11 +110,7 @@ knob {
 
 @media screen and (min-width: 769px) {
     .osc-controls {
-        display:  block;
-        clear:    both;
-        float: right;
-        width:  45%;
-        height: 16em;
+
     }
     
     .noteModifiers select {

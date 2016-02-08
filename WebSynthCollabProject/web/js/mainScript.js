@@ -496,6 +496,7 @@ $( document ).ready(function() {
     
     var oscKnobWidth = 80;
     var oscKnobThickness = 0.2;
+    var oscKnobHeight = 84;
 
     $("#master-volume-knob").knob({
                         'min':0,
@@ -503,6 +504,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseMasterVolume( val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
     
     $("#volume-knob-LFO").knob({
@@ -511,6 +513,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseVolume( "LFO" ,val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
 
     $("#volume-knob-1").knob({
@@ -519,6 +522,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseVolume( "1", val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
                     
     $("#volume-knob-2").knob({
@@ -527,6 +531,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseVolume( "2", val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
                     
     $("#volume-knob-3").knob({
@@ -535,6 +540,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseVolume( "3", val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
                     
     $("#freq-knob-lfo").knob({
@@ -543,6 +549,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseFreqLFO( val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
                     
     $("#freq-knob-lowpass").knob({
@@ -551,6 +558,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseFreqLowpass( val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
                     
     $("#freq-knob-highpass").knob({
@@ -559,6 +567,7 @@ $( document ).ready(function() {
                         'change' : function ( val ) { reviseFreqHighpass( val ) },
                         'width' : oscKnobWidth,
                         'thickness' : oscKnobThickness,
+                        'height': oscKnobHeight,
                     });
     
     $('#master-volume-knob')
