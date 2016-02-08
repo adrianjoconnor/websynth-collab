@@ -474,6 +474,7 @@ $( document ).ready(function() {
         turnNoteOff ( note, false );
     });
     
+    
     window.stereoPannerNode.connect( lowpassFilterNode );
     window.lowpassFilterNode.connect( highpassFilterNode );
     window.highpassFilterNode.connect( exitNode );
@@ -649,6 +650,12 @@ $( document ).ready(function() {
     
     window.lowpassFilterNode.frequency.value = window.lowpassFilterFreq;
     window.highpassFilterNode.frequency.value = window.highpassFilterFreq;
+    
+    /////////////////////////////////////
+    if ( collabId !== "" ) {
+        document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="connectToServer()">Start Collaborating</button><button onclick="removeSession()">Remove Session</button>';
+        connectToServer();
+    }
 
 });
     
@@ -1410,10 +1417,10 @@ function updateBalanceDisplay ( newBalanceVal ) {
     if ( newBalanceVal == 0 ) {
         balanceDisplay.innerHTML = "C";
     } else if ( newBalanceVal < 0 ) {
-        balanceString = newBalanceVal.toFixed(2).toString();
+        balanceString = parseFloat(newBalanceVal).toFixed(2).toString();
         balanceDisplay.innerHTML = balanceString.substring( 1, balanceString.length ) + "L";
     } else {
-        balanceString = newBalanceVal.toFixed(2).toString();
+        balanceString = parseFloat(newBalanceVal).toFixed(2).toString();
         balanceDisplay.innerHTML = balanceString + "R";
     }
 }
@@ -1461,15 +1468,19 @@ function populatePresets () {
 
 function connectToServer () {
     window.CollabState = 0;
+    document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="stopSession()">Stop Session</button>';
+    
     window.CollabSocket = new WebSocket( serverURL );
     
     
     window.CollabSocket.onopen = function (e) {
-        console.log("Socket opened.");
+        document.getElementById('collab-status-holder').innerHTML = "Socket opened. Waiting for server...";
     };
     
     window.CollabSocket.onclose = function (e) {
-        console.log("Socket closed.");
+        document.getElementById('collab-status-holder').innerHTML = "Socket closed. Disconnected.";
+        document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="connectToServer()">Start Collaborating</button><button onclick="removeSession()">Remove Session</button>';
+        window.CollabState = 0;
     };
     
     window.CollabSocket.onmessage = function (event) {
@@ -1487,6 +1498,7 @@ function connectToServer () {
                         newMessage.name = window.chatName;
                         sendMessageToServer ( newMessage );
                         window.CollabState = 1;
+                        document.getElementById('collab-status-holder').innerHTML = "Getting a new ID....";
                     } else {
                         // set id
                         var newMessage = new Object();
@@ -1495,6 +1507,7 @@ function connectToServer () {
                         newMessage.name = window.chatName;
                         sendMessageToServer ( newMessage );
                         window.CollabState = 2;
+                        document.getElementById('collab-status-holder').innerHTML = "Checking ID...";
                     }
                     window.latencyEstSendTime = Date.now();
                 }
@@ -1505,6 +1518,7 @@ function connectToServer () {
                     window.CollabState = 3;
                     window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
                     window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
+                    document.getElementById('collab-status-holder').innerHTML = "Connected to server. You can share this link to collaborate:";
                 }
                 break;
             case 2: // setid sent, waiting on response.
@@ -1513,12 +1527,14 @@ function connectToServer () {
                     window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
                     window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
                     window.collabReady = true;
+                    document.getElementById('collab-status-holder').innerHTML = "Connected to server. You can share this link to collaborate:";
                 } else if ( receivedObject.msgtype === "setid" ) {
                     setSetting ( "collabId", receivedObject.collabid );
                     window.CollabState = 3;
                     window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
                     window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
                     window.collabReady = true;
+                    document.getElementById('collab-status-holder').innerHTML = "Connected to server. ID Rejected - new ID Generated. You can share this link to collaborate:";
                 }
                 break;
             case 3: // After collabId has been verified. "Anything goes" now...
@@ -1558,6 +1574,18 @@ function sendMessageToServer ( messageObject ) {
     console.log( messageObject );
     var JSONifiedMessage = JSON.stringify( messageObject );
     window.CollabSocket.send( JSONifiedMessage );
+}
+
+function stopSession () {
+    window.CollabSocket.close();
+    document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="connectToServer()">Start Collaborating</button><button onclick="removeSession()">Remove Session</button>';
+    window.CollabState = 0;
+}
+
+function removeSession () {
+    setSetting( 'collabId', "" );
+    document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="connectToServer()">Start Collaborating</button>';
+    updateShareLink();
 }
 
 function updateGUI() {

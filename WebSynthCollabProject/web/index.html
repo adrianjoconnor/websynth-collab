@@ -14,11 +14,29 @@
     <body>
         <label for="midiKeyboard">Select MIDI Keyboard: </label><select id="midiKeyboard" onchange="switchMidiKeyboard()"></select>
         <label for="A4FreqSelect">Note A4 Freq. (Tuning)</label><select id="A4FreqSelect" onchange="changeA4Freq()"><option value="432">432hz</option><option value="440" selected="true">440hz</option><option value="444">444hz</option></select>
-        <openmusic-piano-keyboard id="onScreenKeyboard" octaves="2"></openmusic-piano-keyboard>
-        <label for="onScreenKeyboardOctaveSelect">Octave</label><select id="onScreenKeyboardOctaveSelect" onchange="changeOnScreenKeyboardOctaveSelect()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select>
-        <br/><fieldset id="recorder"><legend>Recorder</legend><button id="recordButton" onclick="pressRecordButton()">Record</button></fieldset>
-        <fieldset id="save-load"><legend>Save/Load</legend><button onclick="downloadSettingsFile()">Save</button><input type="file" id="fileSelect" /></fieldset>
-        <fieldset id="presets"><legend>Presets</legend><select id="select-preset" onchange="changePreset()"><option value="SELECTPRESET">Select a preset...</option></select><button onclick="resetToDefault()">Reset to Default</button></fieldset>
+            <fieldset id="on-screen-keyboard-group">
+                <div id="on-screen-keyboard-group-div">
+                    <openmusic-piano-keyboard id="onScreenKeyboard" octaves="2"></openmusic-piano-keyboard>
+                    <label for="onScreenKeyboardOctaveSelect">Octave</label>
+                    <select id="onScreenKeyboardOctaveSelect" onchange="changeOnScreenKeyboardOctaveSelect()"><option value="0" selected="selected">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option></select>
+                </div>
+            </fieldset>
+            <fieldset id="collab-group">
+                <legend>Collarboration Session</legend>
+                <div id="collab-button-holder"><button onclick="connectToServer()">Start Collaborating</button></div>
+                <span id="collab-status-holder">Not Connected.</span>
+                <div id="share">
+                    <label for="shareText">Share Link&colon;</label><input type="text" id="shareText" value="" onfocus="this.select();" readonly />
+                </div>
+            </fieldset>
+        <br/>
+        <div id="utility-group">
+            <fieldset id="recorder"><legend>Recorder</legend>
+                <button id="recordButton" onclick="pressRecordButton()">Record</button>
+            </fieldset>
+            <fieldset id="save-load"><legend>Save/Load</legend><button onclick="downloadSettingsFile()">Save</button><input type="file" id="fileSelect" /></fieldset>
+            <fieldset id="presets"><legend>Presets</legend><select id="select-preset" onchange="changePreset()"><option value="SELECTPRESET">Select a preset...</option></select><button onclick="resetToDefault()">Reset to Default</button></fieldset>
+        </div>
         <fieldset id="filter">
             <legend>Filter</legend>
             <div class="knob-group"><label class="knob-label" for="freq-knob-lowpass">Lowpass Frequency</label><input id="freq-knob-lowpass" onchange="FreqTextChangeLowpass()" class="knob" data-displayprevious="true" data-fgcolor="#ffec03" data-skin="tron" data-cursor="true" value="20000" /></div>
@@ -41,7 +59,7 @@
             <div class="knob-group"><label class="knob-label" for="freq-knob-lfo">Frequency</label><input id="freq-knob-lfo" onchange="FreqTextChangeLFO()" class="knob" class="osc-knob" data-displayprevious="true" data-fgcolor="#ffec03" data-skin="tron" data-cursor="true" value="1" /></div>
             <label class="knob-label" for="waveformSelectLFO">Waveform</label><select id="waveformSelectLFO" onchange="changeWaveformSelect('LFO')"><option value="sine" selected="selected">Sine</option><option value="square">Square</option><option value="sawtooth">Sawtooth</option><option value="triangle">Triangle</option></select>
         </fieldset>
-        <br/>
+        <br id="osc-break" />
         <fieldset class="osc-controls">
             <legend>Osc 1</legend>
             <div class="knob-group"><label class="knob-label" for="volume-knob-1">Volume</label><input id="volume-knob-1" onchange="VolumeTextChange('1')" class="knob" class="osc-knob" data-displayprevious="true" data-fgcolor="#ffec03" data-skin="tron" data-cursor="true" value="35" /></div>
@@ -93,9 +111,6 @@
                 <div><label for="releaseSelect3">Release(ms)</label><input id="releaseSelect3" type="range" min="0.6" value="4.4" max="5.5" step ="0.1" onchange="updateReleaseText('3')" /><input type="text" value="677.24" size="5" id="releaseDisplay3" onchange="updateReleaseSlider('3')"></span></div>
             </div>
         </fieldset>
-        <div id="share">
-            <label for="shareText">Share Link&colon;</label><input type="text" id="shareText" value="" onfocus="this.select();" readonly />
-        </div>
         <br/>
    </body>
 </html>
