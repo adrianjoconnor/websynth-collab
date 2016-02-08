@@ -1,4 +1,3 @@
-# Socket server in python using select functi
 import sys, socket, select, os, MySQLdb, json, time, thread, struct, binascii
 from base64 import b64encode
 from hashlib import sha1
@@ -114,9 +113,8 @@ if __name__ == "__main__":
     
         length = ord(data[1]) & 127
         
-        
         masks = [ord(byte) for byte in data[2:6]]
-        endChar = 6
+        endChar = 6 # The character after the length data and masks
         print "length:" + str(length)
         if length == 126:
             length = struct.unpack(">H", data[2:4])[0]
@@ -148,7 +146,7 @@ if __name__ == "__main__":
         #Sending message to connected client
         preSendTime = int( round( time.time() * 1000 ) )
         
-        # deal with websocket handshake here
+        # deal with WebSocket handshake here
         
         magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
         
@@ -207,8 +205,7 @@ if __name__ == "__main__":
             sendMessage ( connection, json.dumps( messageObject ) )
                     
             
-            # then send the new client's latency to the other clients.
-            # latencyEst
+            # then send the new client's latency to the other clients.s
             messageObject = {"msgtype":"onward-latency-update", "latency":latencyEst}
             for client in Clients:
                 if client.collabID == newId:
@@ -249,7 +246,7 @@ if __name__ == "__main__":
         currentClientID += 1
         print 'Connected with ' + addr[0] + ':' + str(addr[1])
         
-        #start new thread takes 1st argument as a function name to be run, second is the tuple of arguments to the function.
+        # start a new thread to handle this client's connection.
         thread.start_new_thread( clientThread ,(connection, currentClientID ) )
         
     server_socket.close()
