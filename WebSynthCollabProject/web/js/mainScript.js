@@ -20,7 +20,6 @@ window.numSynths = 90;
 window.onScreenKeyboardVelocity = 97;
 
 window.collabId = "";
-window.collabEnabled = false;
 
 window.chatName = "John";
 
@@ -897,17 +896,23 @@ function changeSemitoneSelect( oscName ) {
 
 function setSetting ( setting, value ){
     if ( window.collabReady ) {
-        var remoteSettingChangeMessage = new Object();
-        remoteSettingChangeMessage.msgtype = "setting-change";
-        remoteSettingChangeMessage.setting = setting;
-        remoteSettingChangeMessage.value = value;
-        sendMessageToServer( remoteSettingChangeMessage );
-        
-        setTimeout( function() {
-            window[setting] = value;
-            saveSetting( setting, value );
-            updateShareLink();
-        }, window.latencyEstDelay );
+    	if ( setting !== "collabId" ) {
+	        var remoteSettingChangeMessage = new Object();
+	        remoteSettingChangeMessage.msgtype = "setting-change";
+	        remoteSettingChangeMessage.setting = setting;
+	        remoteSettingChangeMessage.value = value;
+	        sendMessageToServer( remoteSettingChangeMessage );
+	        
+	        setTimeout( function() {
+	            window[setting] = value;
+	            saveSetting( setting, value );
+	            updateShareLink();
+	        }, window.latencyEstDelay );
+    	} else {
+    		window[setting] = value;
+    		saveSetting( setting, value );
+    		updateShareLink();
+    	}
     } else {
         window[setting] = value;
         saveSetting( setting, value );
@@ -1481,6 +1486,7 @@ function connectToServer () {
         document.getElementById('collab-status-holder').innerHTML = "Socket closed. Disconnected.";
         document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="connectToServer()">Start Collaborating</button><button onclick="removeSession()">Remove Session</button>';
         window.CollabState = 0;
+        window.collabReady = false;
     };
     
     window.CollabSocket.onmessage = function (event) {
@@ -1518,6 +1524,7 @@ function connectToServer () {
                     window.CollabState = 3;
                     window.serverLatencyEst = ( Date.now() - window.latencyEstSendTime ) / 2;
                     window.latencyEstDelay = serverLatencyEst * 2; // Use this value for now
+                    window.collabReady = true;
                     document.getElementById('collab-status-holder').innerHTML = "Connected to server. You can share this link to collaborate:";
                 }
                 break;
@@ -1578,6 +1585,7 @@ function sendMessageToServer ( messageObject ) {
 
 function stopSession () {
     window.CollabSocket.close();
+    window.collabReady = false;
     document.getElementById( 'collab-button-holder' ).innerHTML = '<button onclick="connectToServer()">Start Collaborating</button><button onclick="removeSession()">Remove Session</button>';
     window.CollabState = 0;
 }
