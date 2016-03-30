@@ -1,3 +1,5 @@
+window.loggingOn = false;
+
 // for mixdowns.
 var bitDepth = 16;
 var maxAmp = Math.pow ( 2, ( bitDepth - 1 ) ) - 1;
@@ -667,7 +669,7 @@ if (navigator.requestMIDIAccess) {
         // There's no need for sysex here.
     } ).then( accessGrantedToMIDI, accessDeniedToMIDI );
 } else {
-    console.log("Web MIDI not supported in this browser/version.");
+    logMessage("Web MIDI not supported in this browser/version.");
 }
 
 function accessGrantedToMIDI ( MIDIobject ) {
@@ -818,7 +820,7 @@ function switchMidiKeyboard () {
         var selectedId = midiKeyboardSelect.options[midiKeyboardSelect.selectedIndex].value;
         if ( selectedId == midiInput.value.id ) {
             midiInput.value.onmidimessage = processMidiInput;
-            console.log("MIDI Keyboard " + midiInput.value.id + " selected.");
+            logMessage("MIDI Keyboard " + midiInput.value.id + " selected.");
         } else {
             midiInput.value.onmidimessage = function () {};
         }
@@ -829,12 +831,12 @@ function switchMidiKeyboard () {
 
 
 function accessDeniedToMIDI ( errorMessage ) {
-    console.log( errorMessage );
+    logMessage( errorMessage );
 }
 
 if (! window.AudioContext) {
     if (! window.webkitAudioContext) {
-        console.log( "Web Audio API not properly supported." );
+        logMessage( "Web Audio API not properly supported." );
     }
     window.AudioContext = window.webkitAudioContext; // Some versions of Chrome need this.
 }
@@ -1490,7 +1492,7 @@ function connectToServer () {
     };
     
     window.CollabSocket.onmessage = function (event) {
-        console.log(event.data);
+        logMessage(event.data);
         var receviedMessage = event.data;
         var receivedObject = JSON.parse( receviedMessage );
         
@@ -1578,7 +1580,7 @@ function connectToServer () {
 }
 
 function sendMessageToServer ( messageObject ) {
-    console.log( messageObject );
+    logMessage( messageObject );
     var JSONifiedMessage = JSON.stringify( messageObject );
     window.CollabSocket.send( JSONifiedMessage );
 }
@@ -1628,4 +1630,10 @@ function updateGUI() {
     $('#waveformSelect1').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting1 ) });
     $('#waveformSelect2').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting2 ) });
     $('#waveformSelect3').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting3 ) });
+}
+
+function logMessage( message ) {
+	if ( window.loggingOn ) {
+		console.log( message );
+	}
 }
