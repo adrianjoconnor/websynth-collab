@@ -1450,10 +1450,12 @@ function changePreset () {
         var presetSelect = document.getElementById("select-preset");
         var selectedPreset = presetSelect.options[presetSelect.selectedIndex].value;
         
-        var newMessage = new Object();
-        newMessage.msgtype = "preset-change";
-        newMessage.preset = selectedPreset;
-        sendMessageToServer ( newMessage );
+        if ( ! window.settingsLock ) {
+	        var newMessage = new Object();
+	        newMessage.msgtype = "preset-change";
+	        newMessage.preset = selectedPreset;
+	        sendMessageToServer ( newMessage );
+        }
         
         setTimeout( function() {
             loadSettingsObject( presetsList[selectedPreset].preset, true, true );
@@ -1464,6 +1466,7 @@ function changePreset () {
         loadSettingsObject( presetsList[selectedPreset].preset, true, true );
     }
     
+    window.settingsLock = false;
 }
 
 function changePresetAndUpdateGUI ( newPreset ) {
@@ -1567,6 +1570,7 @@ function connectToServer () {
                     window.settingsLock = true;
                     updateGUI();
                 } else if ( receivedObject.msgtype === "preset-change" ) {
+                	window.settingsLock = true;
                     changePresetAndUpdateGUI( receivedObject.preset );
                 } else if ( receivedObject.msgtype === "noteon" ) {
                     turnNoteOn ( receivedObject.note, receivedObject.velocity, true );
