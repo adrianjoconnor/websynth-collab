@@ -6,7 +6,7 @@ from StringIO import StringIO
 
 if __name__ == "__main__":
     # Config file is passed as the first command line parameter.
-    RECV_BUFFER = 2048 # power of 2
+    RECV_BUFFER = 8192 # power of 2
     PORT = 6520
     
     currentClientID = 1
@@ -20,7 +20,6 @@ if __name__ == "__main__":
         filepath = sys.argv[1]
         config_file = open(filepath, 'r')
         config_string = config_file.read()
-        print config_string
         dbParams = json.loads( config_string )
         config_file.close()
         db_host = dbParams["host"]
@@ -41,7 +40,7 @@ if __name__ == "__main__":
         host, user, password, dbname = getDbParams()
         db = MySQLdb.connect( host, user, password, dbname )
         cursor = db.cursor()
-        cursor.execute( "CREATE TABLE IF NOT EXISTS Collab_IDs ( id CHAR(48) NOT NULL PRIMARY KEY );" )
+        cursor.execute( "CREATE TABLE IF NOT EXISTS Collab_IDs ( id VARCHAR(96) NOT NULL PRIMARY KEY );" )
         db.close()
     
     db_host = None
@@ -90,13 +89,13 @@ if __name__ == "__main__":
         return new_collabid
         
     def checkIfCollabIdExists ( collabid ) :
-        "Check if Collab ID provided by the user exists."
-        # User input is taken in this code.
+        "Check if the Collab ID provided by the user exists."
+        # User input is potentially taken in this code.
         host, user, password, dbname = getDbParams()
         db = MySQLdb.connect( host, user, password, dbname )
         cursor = db.cursor()
         cursor.execute( """SELECT id FROM  Collab_IDs
-                        WHERE id = %s;""", ( collabid, ) )
+                        WHERE id in (%s);""", ( collabid, ) )
         numrows = int (cursor.rowcount)
         db.close()
         if numrows == 0:
@@ -150,7 +149,7 @@ if __name__ == "__main__":
         
         magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
         
-        data = connection.recv(1024).strip()
+        data = connection.recv(RECV_BUFFER).strip()
         headers = Message(StringIO(data.split('\r\n', 1)[1]))
         if headers.get("Upgrade", None) != "websocket":
             return
@@ -238,6 +237,7 @@ if __name__ == "__main__":
         
         connection.close()
         
+        # {"msgtype":"setting-change","setting":"masterVolSetting","value":"52"}
     
     while True:
         # Wait to accept a connection - blocking call

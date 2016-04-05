@@ -1,4 +1,5 @@
 window.loggingOn = false;
+window.settingsLock = false;
 
 // for mixdowns.
 var bitDepth = 16;
@@ -899,12 +900,15 @@ function changeSemitoneSelect( oscName ) {
 function setSetting ( setting, value ){
     if ( window.collabReady ) {
     	if ( setting !== "collabId" ) {
-	        var remoteSettingChangeMessage = new Object();
-	        remoteSettingChangeMessage.msgtype = "setting-change";
-	        remoteSettingChangeMessage.setting = setting;
-	        remoteSettingChangeMessage.value = value;
-	        sendMessageToServer( remoteSettingChangeMessage );
-	        
+    		
+    		if ( ! window.settingsLock ) {
+    			var remoteSettingChangeMessage = new Object();
+	        	remoteSettingChangeMessage.msgtype = "setting-change";
+	        	remoteSettingChangeMessage.setting = setting;
+	        	remoteSettingChangeMessage.value = value;
+	        	sendMessageToServer( remoteSettingChangeMessage );
+    		}
+    		
 	        setTimeout( function() {
 	            window[setting] = value;
 	            saveSetting( setting, value );
@@ -1321,6 +1325,9 @@ function loadSettingsJSON ( JSONString ) {
 }
 
 function loadSettingsObject ( SettingsObject, setGUI, overwriteLocal ) {
+	
+	logMessage( "loadSettingsObject called." );
+	
     var SettingsObjectKeys = Object.keys(SettingsObject);
     
     var settingsKeys = Object.keys( createSettingsFile() );
@@ -1342,6 +1349,7 @@ function loadSettingsObject ( SettingsObject, setGUI, overwriteLocal ) {
         } );
         
         if ( setGUI ) {
+        	window.settingsLock = true;
             updateGUI();
         }
     } else {
@@ -1392,7 +1400,7 @@ function generateShareURL ( fullURL ) {
         } else {
             settingsString += "&";
         }
-        settingsString += settingsKey + "=" + settings[settingsKey];
+        settingsString += settingsKey + "=" + encodeURIComponent( settings[settingsKey] );
         curSetting++;
     } );
     
@@ -1548,7 +1556,7 @@ function connectToServer () {
                 break;
             case 3: // After collabId has been verified. "Anything goes" now...
                 if ( receivedObject.msgtype === "setting-change" ) {
-                    setSettingRemotely( receivedObject.setting, receivedObject.value );
+                    	setSettingRemotely( receivedObject.setting, receivedObject.value );
                     if ( receivedObject.setting === "lowpassFilterFreq" ) {
                         window.lowpassFilterNode.frequency.value = receivedObject.value;
                     } else if ( receivedObject.setting === "highpassFilterFreq" ) {
@@ -1556,6 +1564,7 @@ function connectToServer () {
                     } else if ( receivedObject.setting === "balance" ) {
                         window.stereoPannerNode.pan.value = receivedObject.value;
                     }
+                    window.settingsLock = true;
                     updateGUI();
                 } else if ( receivedObject.msgtype === "preset-change" ) {
                     changePresetAndUpdateGUI( receivedObject.preset );
@@ -1599,6 +1608,8 @@ function removeSession () {
 }
 
 function updateGUI() {
+	logMessage( "update GUI called." );
+	
     $('#master-volume-knob')
         .val(window.masterVolSetting)
         .trigger('change');
@@ -1623,13 +1634,15 @@ function updateGUI() {
     $('#freq-knob-highpass')
         .val(window.highpassFilterFreq)
         .trigger('change');
-
+    
     setSlidersandDropdowns();
     
     $('#waveformSelectLFO').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSettingLFO ) });
     $('#waveformSelect1').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting1 ) });
     $('#waveformSelect2').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting2 ) });
     $('#waveformSelect3').ddslick('select', {index: oscillatorTypes.indexOf( window.waveformSetting3 ) });
+    
+    window.settingsLock = false;
 }
 
 function logMessage( message ) {
